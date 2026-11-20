@@ -1,10 +1,10 @@
 use crate::models::{ExportPayload, List, Subtask, Task};
 use rusqlite::{params, Connection};
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::State;
 
-type DbState<'a> = State<'a, Mutex<Connection>>;
+type DbState<'a> = State<'a, Arc<Mutex<Connection>>>;
 
 /// Fetch tasks matching a filter view: "today", "upcoming", "all", "completed", "overdue", or list_id
 #[tauri::command]
