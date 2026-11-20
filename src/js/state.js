@@ -4,7 +4,7 @@ import { api } from './api.js';
 export const state = {
   tasks: [],
   lists: [],
-  activeFilter: 'today',
+  activeFilter: 'all',
   selectedListId: 'all',
   searchQuery: '',
   activeTask: null,
@@ -118,8 +118,8 @@ export function getFilteredTasks() {
 export function getUpNextTask() {
   const pending = state.tasks.filter(t => !t.done);
   if (!pending.length) return null;
-  const withDue = pending.filter(t => t.due_at).sort((a, b) => new Date(a.due_at) - new Date(b.due_at));
-  if (withDue.length) return withDue[0];
+  const pinned = pending.filter(t => t.pinned);
+  if (pinned.length) return pinned[0];
   const byPrio = [...pending].sort((a, b) => (b.priority || 0) - (a.priority || 0));
   return byPrio[0];
 }

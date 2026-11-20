@@ -1,7 +1,7 @@
 /* Glass Container & Pastel Backdrop Orbs */
 html, body {
   margin: 0;
-  padding: 6px;
+  padding: 0;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
@@ -14,7 +14,7 @@ html, body {
 }
 
 body.glance-mode {
-  padding: 2px !important;
+  padding: 0 !important;
 }
 
 *, *::before, *::after {

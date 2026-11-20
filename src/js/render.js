@@ -4,18 +4,12 @@ import { state, setFilter, setSelectedList, refreshTasks, getFilteredTasks, getU
 
 export function renderApp() {
   renderHeader();
-  renderHeroCard();
   renderFilterChips();
   renderListFilterRow();
   renderTaskList();
 }
 
 export function renderHeader() {
-  const greetingEl = document.getElementById('header-greeting');
-  if (greetingEl) {
-    const hour = new Date().getHours();
-    greetingEl.textContent = hour >= 5 && hour < 12 ? 'Good morning' : (hour >= 12 && hour < 18 ? 'Good afternoon' : 'Good evening');
-  }
   const badge = document.getElementById('btn-day-progress');
   if (badge) {
     const now = new Date();
@@ -28,59 +22,11 @@ export function renderHeader() {
   }
 }
 
-export function renderHeroCard() {
-  const heroCard = document.getElementById('hero-card');
-  if (!heroCard) return;
-  const upNext = getUpNextTask();
-  heroCard.replaceChildren();
-
-  if (!upNext) {
-    const label = document.createElement('div'); label.className = 'hero-label'; label.textContent = 'FOCUS MODE';
-    const title = document.createElement('h2'); title.className = 'hero-title'; title.textContent = 'All caught up for today';
-    const footer = document.createElement('div'); footer.className = 'hero-footer';
-    const sub = document.createElement('span'); sub.style.cssText = 'font-size:12px; color:#7C5648;'; sub.textContent = 'Ready for deep work?';
-    const focusBtn = document.createElement('button'); focusBtn.className = 'btn-start-focus'; focusBtn.textContent = 'Start Focus';
-    focusBtn.addEventListener('click', () => window.dispatchEvent(new CustomEvent('tododo:open-focus', { detail: { task: null } })));
-    footer.append(sub, focusBtn);
-    heroCard.append(label, title, footer);
-    return;
-  }
-
-  const label = document.createElement('div'); label.className = 'hero-label';
-  if (upNext.pinned) label.textContent = 'UP NEXT · PINNED';
-  else if (upNext.due_at) {
-    const diff = Math.round((new Date(upNext.due_at) - new Date()) / 3600000);
-    label.textContent = diff > 0 && diff <= 24 ? `UP NEXT · IN ${diff}H` : (diff <= 0 ? 'UP NEXT · DUE NOW' : 'UP NEXT · TODAY');
-  } else label.textContent = 'UP NEXT';
-
-  const title = document.createElement('h2'); title.className = 'hero-title'; title.textContent = upNext.title;
-  const footer = document.createElement('div'); footer.className = 'hero-footer';
-  const pillsContainer = document.createElement('div'); pillsContainer.className = 'hero-pills';
-
-  if (upNext.list_id) {
-    const lObj = state.lists.find(l => l.id === upNext.list_id);
-    if (lObj) {
-      const lp = document.createElement('span'); lp.className = 'pill pill-study'; lp.textContent = lObj.name;
-      pillsContainer.appendChild(lp);
-    }
-  }
-  if (upNext.priority > 0) {
-    const pp = document.createElement('span'); pp.className = `pill ${upNext.priority >= 3 ? 'pill-high' : (upNext.priority === 2 ? 'pill-med' : 'pill-low')}`;
-    pp.textContent = ['Low', 'Medium', 'High'][upNext.priority - 1] || 'High';
-    pillsContainer.appendChild(pp);
-  }
-
-  const focusBtn = document.createElement('button'); focusBtn.className = 'btn-start-focus'; focusBtn.textContent = 'Start focus';
-  focusBtn.addEventListener('click', () => window.dispatchEvent(new CustomEvent('tododo:open-focus', { detail: { task: upNext } })));
-  footer.append(pillsContainer, focusBtn);
-  heroCard.append(label, title, footer);
-}
-
 export function renderFilterChips() {
   const container = document.getElementById('filter-row');
   if (!container) return;
   container.replaceChildren();
-  const filters = [{ key: 'today', label: 'Today' }, { key: 'upcoming', label: 'Upcoming' }, { key: 'overdue', label: 'Overdue' }, { key: 'completed', label: 'Done' }];
+  const filters = [{ key: 'all', label: 'All Tasks' }, { key: 'completed', label: 'Done' }];
   for (const f of filters) {
     const btn = document.createElement('button');
     btn.className = `filter-chip ${state.activeFilter === f.key ? 'active' : ''}`;
@@ -105,7 +51,33 @@ export function renderListFilterRow() {
 
   addChip('All', state.selectedListId === 'all', () => setSelectedList('all'));
   addChip('📥 Inbox', state.selectedListId === null, () => setSelectedList(null));
-  state.lists.forEach(l => addChip(`🏷️ ${l.name}`, state.selectedListId === l.id, () => setSelectedList(l.id)));
+
+  state.lists.forEach(l => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:inline-flex; align-items:center; gap:2px;';
+    const btn = document.createElement('button');
+    btn.className = `list-chip ${state.selectedListId === l.id ? 'active' : ''}`;
+    btn.textContent = `🏷️ ${l.name}`;
+    btn.addEventListener('click', () => setSelectedList(l.id));
+
+    const del = document.createElement('button');
+    del.className = 'btn-delete-list-chip';
+    del.textContent = '✕';
+    del.title = `Delete list "${l.name}"`;
+    del.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (window.confirm(`Delete list "${l.name}"? Tasks will move to Inbox.`)) {
+        await api.deleteList(l.id);
+        if (state.selectedListId === l.id) state.selectedListId = 'all';
+        state.lists = await api.getLists();
+        renderListFilterRow();
+        refreshTasks();
+      }
+    });
+
+    wrap.append(btn, del);
+    container.appendChild(wrap);
+  });
 
   const addListBtn = document.createElement('button');
   addListBtn.className = 'list-chip btn-new-list-chip';
@@ -151,8 +123,19 @@ export function renderTaskList() {
     });
 
     const content = document.createElement('div'); content.className = 'tile-content';
+    const titleRow = document.createElement('div');
+    titleRow.style.cssText = 'display:flex; align-items:center; gap:6px; overflow:hidden;';
     const titleEl = document.createElement('div'); titleEl.className = 'tile-title'; titleEl.textContent = task.title;
-    content.appendChild(titleEl);
+    titleRow.appendChild(titleEl);
+
+    if (task.priority > 0) {
+      const prioPill = document.createElement('span');
+      prioPill.className = `pill ${task.priority >= 3 ? 'pill-high' : (task.priority === 2 ? 'pill-med' : 'pill-low')}`;
+      prioPill.style.cssText = 'font-size:9.5px; padding:1px 6px; font-weight:700; flex-shrink:0;';
+      prioPill.textContent = task.priority >= 3 ? '⚡ High' : (task.priority === 2 ? 'Medium' : 'Low');
+      titleRow.appendChild(prioPill);
+    }
+    content.appendChild(titleRow);
 
     if (task.subtask_count > 0 || (task.repeat_rule && task.repeat_rule !== 'none')) {
       const meta = document.createElement('div'); meta.className = 'tile-meta';
@@ -167,10 +150,6 @@ export function renderTaskList() {
       const lObj = state.lists.find(l => l.id === task.list_id);
       if (lObj) right.appendChild(Object.assign(document.createElement('span'), { className: 'pill', style: 'font-size:9px; padding:1px 6px;', textContent: lObj.name }));
     }
-    if (task.due_at) {
-      right.appendChild(Object.assign(document.createElement('span'), { className: 'tile-time', textContent: new Date(task.due_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }));
-    }
-
     const delBtn = document.createElement('button');
     delBtn.className = 'btn-tile-delete'; delBtn.textContent = '✕';
     delBtn.addEventListener('click', async (e) => {
@@ -190,7 +169,6 @@ function renderEmptyState() {
   const h = document.createElement('div'); h.style.cssText = 'font-family:var(--font-heading); font-size:15px; font-weight:700; color:var(--ink);';
   const sub = document.createElement('div'); sub.style.cssText = 'font-size:11.5px; color:var(--muted); margin-top:4px;';
   if (state.activeFilter === 'completed') { icon.textContent = '✨'; h.textContent = 'All caught up!'; sub.textContent = 'Completed items will show up here'; }
-  else if (state.activeFilter === 'overdue') { icon.textContent = '🌤️'; h.textContent = 'No overdue tasks'; sub.textContent = 'You are right on track!'; }
   else { icon.textContent = '🍃'; h.textContent = 'Clear skies'; sub.textContent = 'Add a task below to start your flow'; }
   box.append(icon, h, sub);
   return box;

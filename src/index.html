@@ -40,37 +40,35 @@
     </div>
 
     <!-- Glass Surface Main View -->
-    <div class="glass glass-surface">
-      <header class="widget-header header-drag" data-tauri-drag-region>
-        <div class="header-titles" data-tauri-drag-region>
-          <span class="header-greeting" id="header-greeting" data-tauri-drag-region>Good evening</span>
-          <button id="btn-day-progress" class="day-progress-badge" aria-label="Time perspective">⏳ 4h left (82%)</button>
-          <h1 class="header-title" data-tauri-drag-region>Today</h1>
+    <div class="glass glass-surface" data-tauri-drag-region>
+      <div class="window-drag-strip" data-tauri-drag-region><div class="drag-handle-pill" data-tauri-drag-region></div></div>
+      <header class="widget-header" data-tauri-drag-region>
+        <!-- Highlighted Time Perspective & Timer/Focus Hero Badges -->
+        <div class="header-hero-badges" data-tauri-drag-region>
+          <button id="btn-day-progress" class="hero-pill-badge" aria-label="Time perspective" title="Life & Time Perspective">⏳ 4h left (82%)</button>
+          <button id="btn-open-focus-header" class="hero-focus-badge" aria-label="Focus mode" title="Start Focus (⏱️)">⏱️ Focus 25m</button>
         </div>
         <div class="header-actions">
-          <button id="btn-open-focus-header" class="icon-btn" aria-label="Focus mode" title="Focus Mode (⏱️)">⏱️</button>
-          <button id="btn-open-guide" class="icon-btn" aria-label="Guide" title="Smart Input Guide (💡)">💡</button>
+          <button id="btn-open-guide" class="icon-btn" aria-label="Guide" title="Guide (💡)">💡</button>
           <button id="btn-collapse-glance" class="icon-btn" aria-label="Capsule" title="Capsule view">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="12" x2="20" y2="12"></line></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="12" x2="20" y2="12"></line></svg>
           </button>
           <button id="btn-toggle-search" class="icon-btn" aria-label="Search" title="Search (Ctrl+F)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </button>
           <button id="btn-open-settings" class="icon-btn" aria-label="Settings" title="Settings">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           </button>
           <button id="btn-close-widget" class="icon-btn btn-close-header" aria-label="Close" title="Close">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
       </header>
 
       <div id="search-container" class="search-container">
         <input type="text" id="search-input" class="search-input" placeholder="Search tasks... (Ctrl+F)" aria-label="Search" />
-        <button id="btn-close-search" class="icon-btn" style="width:28px; height:28px;" aria-label="Close">✕</button>
+        <button id="btn-close-search" class="icon-btn" style="width:26px; height:26px;" aria-label="Close">✕</button>
       </div>
-
-      <div id="hero-card" class="hero-card"></div>
 
       <!-- Mini Focus Bar -->
       <div id="mini-focus-bar" class="mini-focus-bar">
@@ -105,12 +103,6 @@
             <button class="drawer-opt-btn active" data-type="list" data-val="none">Inbox</button>
           </div>
           <div class="drawer-row">
-            <span class="drawer-label">Due:</span>
-            <button class="drawer-opt-btn active" data-type="due" data-val="none">None</button>
-            <button class="drawer-opt-btn" data-type="due" data-val="today">Today</button>
-            <button class="drawer-opt-btn" data-type="due" data-val="tomorrow">Tomorrow</button>
-          </div>
-          <div class="drawer-row">
             <span class="drawer-label">Repeat:</span>
             <button class="drawer-opt-btn active" data-type="rep" data-val="none">None</button>
             <button class="drawer-opt-btn" data-type="rep" data-val="daily">Daily</button>
@@ -119,10 +111,10 @@
           <input type="text" id="drawer-notes-input" class="drawer-notes-input" placeholder="Add description / notes..." />
         </div>
         <div class="add-input-wrapper">
-          <input type="text" id="add-task-input" class="add-input" placeholder="Add a task, try tomorrow 5pm !high" aria-label="Add task" />
-          <button id="btn-toggle-drawer" class="btn-toggle-drawer" aria-label="Options" title="Task Options">⚙️</button>
+          <input type="text" id="add-task-input" class="add-input" placeholder="Add a task, or click ⚙️ for options..." aria-label="Add task" />
+          <button id="btn-toggle-drawer" class="btn-toggle-drawer" aria-label="Task options" title="Task options (Priority, List, Repeat)">⚙️</button>
           <button id="btn-add-task" class="btn-add-submit" aria-label="Submit" title="Add task">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </button>
         </div>
         <div id="live-chips-preview" class="live-chips-preview" aria-live="polite"></div>
@@ -142,8 +134,8 @@
         <div class="sheet-body">
           <input type="text" id="sheet-task-title" class="task-edit-title" placeholder="Task title..." />
           <textarea id="sheet-task-notes" class="task-edit-notes" placeholder="Add notes or details..."></textarea>
+          <!-- 3-Column Balanced Pastel Property Grid: Priority, List, Repeat -->
           <div class="property-grid">
-            <div id="prop-tile-due" class="prop-tile prop-tile-due" role="button" tabindex="0"><span class="prop-label">Due</span><span id="prop-val-due" class="prop-value">None</span></div>
             <div id="prop-tile-priority" class="prop-tile prop-tile-priority" role="button" tabindex="0"><span class="prop-label">Priority</span><span id="prop-val-priority" class="prop-value">None</span></div>
             <div id="prop-tile-list" class="prop-tile prop-tile-list" role="button" tabindex="0"><span class="prop-label">List</span><span id="prop-val-list" class="prop-value">Inbox</span></div>
             <div id="prop-tile-repeat" class="prop-tile prop-tile-repeat" role="button" tabindex="0"><span class="prop-label">Repeat</span><span id="prop-val-repeat" class="prop-value">None</span></div>
@@ -158,12 +150,7 @@
           </div>
         </div>
         <div class="sheet-footer">
-          <div class="snooze-chips">
-            <button class="chip-snooze" data-mins="10">+10m</button>
-            <button class="chip-snooze" data-mins="60">+1h</button>
-            <button class="chip-snooze" data-mins="1440">Tomorrow</button>
-          </div>
-          <button id="sheet-btn-delete" class="btn-task-delete">Delete</button>
+          <button id="sheet-btn-delete" class="btn-task-delete">Delete Task</button>
         </div>
         <div id="prop-picker-overlay" class="prop-picker-overlay" style="display:none;">
           <div class="prop-picker-modal">
@@ -265,12 +252,8 @@
           <div class="picker-header"><span class="picker-title">💡 Smart Input Guide</span><button id="btn-close-guide" class="icon-btn" style="width:28px; height:28px;">✕</button></div>
           <div style="font-size:12px; color:var(--ink); line-height:1.5; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
             <div><b>⚡ Priority:</b> Type <code>!high</code>, <code>!med</code>, <code>!low</code>, <code>!urgent</code></div>
-            <div><b>📅 Dates:</b> Type <code>today</code>, <code>tomorrow</code>, <code>friday</code></div>
-            <div><b>⏰ Times:</b> Type <code>5pm</code>, <code>10am</code>, <code>10 tomorrow</code></div>
             <div><b>🏷️ Lists:</b> Type <code>#work</code>, <code>#study</code>, <code>#personal</code></div>
-            <div style="background:var(--cream-base); padding:6px 8px; border-radius:10px; font-size:11px;">
-              <b>Example:</b> <code>Wash dishes 10 tomorrow !high #personal</code>
-            </div>
+            <div><b>⚙️ Visual Options:</b> Click the <code>⚙️</code> button to pick Priority, List, Repeat, and add Notes visually.</div>
           </div>
         </div>
       </div>

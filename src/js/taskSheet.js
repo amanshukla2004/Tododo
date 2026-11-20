@@ -59,7 +59,6 @@ export function initTaskSheet() {
     });
   }
 
-  document.getElementById('prop-tile-due')?.addEventListener('click', () => openPicker('due'));
   document.getElementById('prop-tile-priority')?.addEventListener('click', () => openPicker('priority'));
   document.getElementById('prop-tile-list')?.addEventListener('click', () => openPicker('list'));
   document.getElementById('prop-tile-repeat')?.addEventListener('click', () => openPicker('repeat'));
@@ -77,16 +76,6 @@ export function initTaskSheet() {
 
   if (btnAddStep) btnAddStep.addEventListener('click', handleAddStep);
   if (inputStep) inputStep.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAddStep(); });
-
-  document.querySelectorAll('.chip-snooze').forEach(chip => {
-    chip.addEventListener('click', async () => {
-      if (!currentTask) return;
-      const mins = parseInt(chip.getAttribute('data-mins'), 10) || 10;
-      await api.snoozeTask(currentTask.id, mins);
-      closeTaskSheet();
-      refreshTasks();
-    });
-  });
 
   if (btnDeleteTask) {
     btnDeleteTask.addEventListener('click', async () => {
@@ -133,38 +122,7 @@ function openPicker(type) {
     container.appendChild(btn);
   };
 
-  if (type === 'due') {
-    title.textContent = 'Select Due Date';
-    addBtn('📅 Today (6:00 PM)', () => { const d = new Date(); d.setHours(18, 0, 0, 0); currentTask.due_at = d.toISOString(); return api.updateTask(currentTask.id, { dueAt: currentTask.due_at }); });
-    addBtn('🌅 Tomorrow (9:00 AM)', () => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); currentTask.due_at = d.toISOString(); return api.updateTask(currentTask.id, { dueAt: currentTask.due_at }); });
-    addBtn('🌆 Tomorrow (6:00 PM)', () => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(18, 0, 0, 0); currentTask.due_at = d.toISOString(); return api.updateTask(currentTask.id, { dueAt: currentTask.due_at }); });
-    addBtn('🏖️ This Weekend (Sat 10:00 AM)', () => {
-      const d = new Date(); const diff = (6 - d.getDay() + 7) % 7 || 7; d.setDate(d.getDate() + diff); d.setHours(10, 0, 0, 0);
-      currentTask.due_at = d.toISOString(); return api.updateTask(currentTask.id, { dueAt: currentTask.due_at });
-    });
-    addBtn('❌ Clear Due Date', () => { currentTask.due_at = null; return api.updateTask(currentTask.id, { dueAt: null }); });
-
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex; gap:6px; margin-top:6px;';
-    const input = document.createElement('input');
-    input.type = 'datetime-local';
-    input.className = 'step-add-input';
-    input.style.cssText = 'flex:1; height:34px; font-size:12px;';
-    const setBtn = document.createElement('button');
-    setBtn.className = 'btn-start-focus';
-    setBtn.textContent = 'Set';
-    setBtn.style.padding = '0 12px';
-    setBtn.addEventListener('click', async () => {
-      if (input.value) {
-        currentTask.due_at = new Date(input.value).toISOString();
-        await api.updateTask(currentTask.id, { dueAt: currentTask.due_at });
-        updatePropertyTiles(); overlay.style.display = 'none'; refreshTasks();
-      }
-    });
-    row.append(input, setBtn);
-    container.appendChild(row);
-
-  } else if (type === 'priority') {
+  if (type === 'priority') {
     title.textContent = 'Select Priority';
     const prios = [{ l: '⚪ None', v: 0 }, { l: '🔵 Low (!low)', v: 1 }, { l: '🟡 Medium (!med)', v: 2 }, { l: '🔴 High (!high / !urgent)', v: 3 }];
     prios.forEach(p => addBtn(p.l, () => { currentTask.priority = p.v; return api.updateTask(currentTask.id, { priority: p.v }); }));
@@ -221,12 +179,6 @@ export function closeTaskSheet() {
 
 function updatePropertyTiles() {
   if (!currentTask) return;
-  const valDue = document.getElementById('prop-val-due');
-  if (valDue) {
-    valDue.textContent = currentTask.due_at
-      ? new Date(currentTask.due_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-      : 'None';
-  }
   const valPrio = document.getElementById('prop-val-priority');
   if (valPrio) valPrio.textContent = ['None', 'Low', 'Medium', 'High'][currentTask.priority] || 'None';
   const valList = document.getElementById('prop-val-list');
