@@ -7,36 +7,169 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="widget-container" id="app">
-    <!-- Header / Drag region for moving the widget -->
-    <header class="widget-header" data-tauri-drag-region>
-      <div class="brand" data-tauri-drag-region>
-        <span class="status-dot"></span>
-        <h1 class="brand-title">Tododo</h1>
+  <!-- Ambient Glance Pill (Active when collapsed) -->
+  <aside class="glance-pill" id="glance-pill" data-tauri-drag-region>
+    <div class="glance-left" data-tauri-drag-region>
+      <div class="glance-ring-wrapper">
+        <svg class="glance-ring" viewBox="0 0 36 36">
+          <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          <path class="ring-progress" id="glance-progress-path" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        </svg>
+        <span class="glance-count" id="glance-count">0</span>
       </div>
-      <div class="window-controls">
-        <span class="version-badge">v0.1.0</span>
+      <span class="glance-title" id="glance-title" data-tauri-drag-region>All tasks finished! 🎉</span>
+    </div>
+    <div class="glance-actions">
+      <button class="icon-btn" id="btn-glance-expand" title="Expand widget" aria-label="Expand widget">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Expanded Desk Canvas Widget -->
+  <main class="widget-canvas" id="widget-canvas">
+    <!-- Draggable Custom Window Header -->
+    <header class="canvas-header" data-tauri-drag-region>
+      <div class="header-brand" data-tauri-drag-region>
+        <div class="brand-avatar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="brand-meta" data-tauri-drag-region>
+          <span class="brand-name" data-tauri-drag-region>Tododo</span>
+          <span class="brand-subtitle" id="canvas-task-stats" data-tauri-drag-region>Today · 0 left</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button class="header-btn" id="btn-toggle-pin" title="Toggle Pin Always On Top" aria-label="Pin widget">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-2l-2-3V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v6l-2 3v2z"/></svg>
+        </button>
+        <button class="header-btn" id="btn-collapse" title="Collapse to Glance Pill" aria-label="Collapse widget">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="20" y2="12"/></svg>
+        </button>
+        <button class="header-btn btn-close" id="btn-close" title="Minimize to Tray" aria-label="Close widget">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="widget-main">
-      <div class="hero-card">
-        <div class="hero-icon">✨</div>
-        <h2 class="hero-title">Ambient To-Do Companion</h2>
-        <p class="hero-desc">Phase 1 Vanilla Shell is live! Running native Tauri v2 with zero bundlers and minimal memory footprint.</p>
-        
-        <div class="connection-status" id="tauri-status">
-          <span class="pulse-indicator"></span>
-          <span id="status-text">Checking Tauri connection...</span>
+    <!-- Filter & View Selector Tabs -->
+    <nav class="view-selector" aria-label="Task views">
+      <button class="view-tab active" data-filter="today">Today</button>
+      <button class="view-tab" data-filter="upcoming">7 Days</button>
+      <button class="view-tab" data-filter="all">All Tasks</button>
+      <button class="view-tab" data-filter="completed">Done</button>
+    </nav>
+
+    <!-- Quick Add Input Field -->
+    <form class="task-creator" id="task-creator-form">
+      <div class="creator-input-box">
+        <span class="creator-icon">+</span>
+        <input
+          type="text"
+          id="task-title-input"
+          class="creator-input"
+          placeholder="Add task... (Enter to save, !high, !med)"
+          autocomplete="off"
+          required
+        />
+      </div>
+    </form>
+
+    <!-- Scrollable Task List Rows -->
+    <section class="task-scroller" id="task-scroller">
+      <!-- Pinned Section -->
+      <div class="task-group" id="group-pinned" style="display: none;">
+        <div class="group-header">
+          <span class="group-title">PINNED</span>
+        </div>
+        <div class="task-items" id="list-pinned"></div>
+      </div>
+
+      <!-- Main Focus Section -->
+      <div class="task-group" id="group-main">
+        <div class="group-header">
+          <span class="group-title" id="main-group-title">FOCUS</span>
+        </div>
+        <div class="task-items" id="list-main"></div>
+      </div>
+
+      <!-- Completed Section -->
+      <div class="task-group" id="group-completed" style="display: none;">
+        <div class="group-header group-header-interactive" id="btn-toggle-completed">
+          <span class="group-title">COMPLETED (<span id="completed-count">0</span>)</span>
+          <button class="btn-clear-completed" id="btn-clear-completed">Clear</button>
+        </div>
+        <div class="task-items" id="list-completed"></div>
+      </div>
+
+      <!-- Empty State Indicator -->
+      <div class="empty-state" id="empty-state" style="display: none;">
+        <div class="empty-icon">☕</div>
+        <p class="empty-text">No tasks for today. You're all caught up!</p>
+      </div>
+    </section>
+
+    <!-- Footer Status & Quick Controls -->
+    <footer class="canvas-footer" data-tauri-drag-region>
+      <div class="footer-left" data-tauri-drag-region>
+        <span class="drag-hint" data-tauri-drag-region>Drag header to move</span>
+      </div>
+      <div class="footer-right">
+        <button class="footer-icon-btn" id="btn-settings-toggle" title="Settings" aria-label="Open settings">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Sliding Task Details Drawer -->
+  <aside class="details-drawer" id="details-drawer">
+    <div class="drawer-header">
+      <span class="drawer-title">Task Details</span>
+      <button class="drawer-close" id="btn-close-drawer" aria-label="Close details">✕</button>
+    </div>
+    <div class="drawer-body">
+      <input type="text" class="drawer-input-title" id="drawer-task-title" placeholder="Task title" />
+      
+      <!-- Priority segmented selector -->
+      <div class="drawer-field">
+        <label class="drawer-label">Priority</label>
+        <div class="segmented-control" id="drawer-priority-picker">
+          <button class="segment-btn active" data-priority="0">Low</button>
+          <button class="segment-btn" data-priority="1">Medium</button>
+          <button class="segment-btn" data-priority="2">High</button>
         </div>
       </div>
-    </main>
 
-    <!-- Footer -->
-    <footer class="widget-footer">
-      <span class="footer-hint">Next: Obsidian Glass & Transparency (Phase 2)</span>
-    </footer>
+      <!-- Notes area -->
+      <div class="drawer-field">
+        <label class="drawer-label">Notes</label>
+        <textarea class="drawer-notes" id="drawer-task-notes" placeholder="Add additional details or links..."></textarea>
+      </div>
+
+      <!-- Subtasks Checklist -->
+      <div class="drawer-field">
+        <div class="subtasks-header">
+          <label class="drawer-label">Subtasks (<span id="drawer-subtask-progress">0/0</span>)</label>
+        </div>
+        <div class="subtasks-list" id="drawer-subtasks-list"></div>
+        <form class="subtask-add-form" id="subtask-add-form">
+          <input type="text" class="subtask-add-input" id="subtask-add-input" placeholder="Add a step and press Enter..." />
+        </form>
+      </div>
+
+      <!-- Actions -->
+      <div class="drawer-actions">
+        <button class="btn-danger" id="btn-delete-task">Delete Task</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Quick Undo Toast Notification -->
+  <div class="toast-notification" id="toast-notification">
+    <span class="toast-message" id="toast-message">Task deleted</span>
+    <button class="toast-undo-btn" id="toast-undo-btn">Undo</button>
   </div>
 
   <script src="app.js"></script>
