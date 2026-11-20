@@ -1,6 +1,6 @@
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Manager, Wry};
+use tauri::{AppHandle, Emitter, Manager};
 
 /// Configures native Windows System Tray with context menu and quick actions
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {

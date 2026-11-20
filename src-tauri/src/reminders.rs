@@ -1,4 +1,4 @@
-use rusqlite::{params, Connection};
+use rusqlite::Connection;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -13,7 +13,7 @@ pub fn start_reminder_worker(app: AppHandle, conn_mutex: Arc<Mutex<Connection>>)
             let lock_res = conn_mutex.lock();
             if let Ok(conn) = lock_res {
                 // Find pending tasks that have reached their due time
-                let mut stmt_res = conn.prepare(
+                let stmt_res = conn.prepare(
                     "SELECT id, title FROM tasks
                      WHERE done = 0
                        AND due_at IS NOT NULL

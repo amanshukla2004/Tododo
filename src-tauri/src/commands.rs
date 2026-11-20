@@ -37,9 +37,9 @@ pub fn get_tasks(state: DbState, filter: Option<String>) -> Result<Vec<Task>, St
     let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
 
     let task_iter = if filter_val.starts_with("list_") {
-        stmt.query_map(params![filter_val], Self_map_task)
+        stmt.query_map(params![filter_val], map_task_row)
     } else {
-        stmt.query_map([], Self_map_task)
+        stmt.query_map([], map_task_row)
     }
     .map_err(|e| e.to_string())?;
 
@@ -51,7 +51,7 @@ pub fn get_tasks(state: DbState, filter: Option<String>) -> Result<Vec<Task>, St
     Ok(tasks)
 }
 
-fn Self_map_task(row: &rusqlite::Row) -> rusqlite::Result<Task> {
+fn map_task_row(row: &rusqlite::Row) -> rusqlite::Result<Task> {
     let done_int: i64 = row.get(3)?;
     let pinned_int: i64 = row.get(5)?;
     Ok(Task {
@@ -110,7 +110,7 @@ pub fn add_task(
          FROM tasks WHERE id = ?"
     ).map_err(|e| e.to_string())?;
 
-    let task = stmt.query_row(params![id], Self_map_task).map_err(|e| e.to_string())?;
+    let task = stmt.query_row(params![id], map_task_row).map_err(|e| e.to_string())?;
     Ok(task)
 }
 
