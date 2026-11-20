@@ -159,6 +159,18 @@
         </form>
       </div>
 
+      <!-- Pomodoro Focus Timer -->
+      <div class="drawer-field">
+        <label class="drawer-label">Pomodoro Focus Timer</label>
+        <div class="pomodoro-card">
+          <div class="pomodoro-timer" id="pomodoro-timer-display">25:00</div>
+          <div class="pomodoro-controls">
+            <button class="pomodoro-btn" id="btn-pomo-toggle">Start Focus</button>
+            <button class="pomodoro-btn btn-secondary" id="btn-pomo-reset">Reset</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Actions -->
       <div class="drawer-actions">
         <button class="btn-danger" id="btn-delete-task">Delete Task</button>
@@ -194,6 +206,16 @@
         <div class="segmented-control" id="sound-toggle-control">
           <button class="segment-btn active" data-sound="true">Enabled</button>
           <button class="segment-btn" data-sound="false">Mute</button>
+        </div>
+      </div>
+      <div class="drawer-field">
+        <label class="drawer-label">Data Backup & Restore</label>
+        <div class="backup-actions">
+          <button class="segment-btn" id="btn-export-json">Export JSON</button>
+          <label class="segment-btn" style="text-align: center; cursor: pointer;">
+            Import JSON
+            <input type="file" id="input-import-json" accept=".json" style="display: none;" />
+          </label>
         </div>
       </div>
     </div>

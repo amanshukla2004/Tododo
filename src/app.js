@@ -202,6 +202,88 @@ function setupEventListeners() {
     });
   });
 
+  // Pomodoro Focus Timer Logic
+  let pomoSeconds = 25 * 60;
+  let pomoInterval = null;
+  const pomoDisplay = document.getElementById("pomodoro-timer-display");
+  const btnPomoToggle = document.getElementById("btn-pomo-toggle");
+  const btnPomoReset = document.getElementById("btn-pomo-reset");
+
+  function updatePomoDisplay() {
+    const mins = String(Math.floor(pomoSeconds / 60)).padStart(2, "0");
+    const secs = String(pomoSeconds % 60).padStart(2, "0");
+    pomoDisplay.textContent = `${mins}:${secs}`;
+  }
+
+  btnPomoToggle.addEventListener("click", () => {
+    if (pomoInterval) {
+      clearInterval(pomoInterval);
+      pomoInterval = null;
+      btnPomoToggle.textContent = "Resume Focus";
+    } else {
+      btnPomoToggle.textContent = "Pause";
+      pomoInterval = setInterval(() => {
+        if (pomoSeconds > 0) {
+          pomoSeconds -= 1;
+          updatePomoDisplay();
+        } else {
+          clearInterval(pomoInterval);
+          pomoInterval = null;
+          pomoSeconds = 25 * 60;
+          btnPomoToggle.textContent = "Start Focus";
+          updatePomoDisplay();
+          playPopSound();
+          showToast("🎉 Pomodoro session finished! Take a 5 min break.");
+        }
+      }, 1000);
+    }
+  });
+
+  btnPomoReset.addEventListener("click", () => {
+    if (pomoInterval) {
+      clearInterval(pomoInterval);
+      pomoInterval = null;
+    }
+    pomoSeconds = 25 * 60;
+    btnPomoToggle.textContent = "Start Focus";
+    updatePomoDisplay();
+  });
+
+  // Export Data JSON
+  document.getElementById("btn-export-json").addEventListener("click", async () => {
+    try {
+      const dataStr = await tauri.invoke("export_data");
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tododo-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Data exported successfully");
+    } catch (err) {
+      console.error("Export failed:", err);
+    }
+  });
+
+  // Import Data JSON
+  document.getElementById("input-import-json").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const jsonStr = event.target.result;
+        const count = await tauri.invoke("import_data", { jsonStr });
+        showToast(`Imported ${count} tasks`);
+        await loadTasks();
+      } catch (err) {
+        console.error("Import failed:", err);
+      }
+    };
+    reader.readAsText(file);
+  });
+
   // Keyboard Shortcuts: Tab toggles Glance Mode, Esc closes Drawer, Ctrl+Z undoes delete
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
