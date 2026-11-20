@@ -1,7 +1,6 @@
 /**
- * Tododo — Ambient Desktop Widget Controller (Vanilla JS)
- * Zero frameworks, zero bundlers.
- * Strict textContent rendering (Zero innerHTML vulnerabilities).
+ * Tododo — Phone-Grade Desktop Wallpaper Widget Controller
+ * Pure Vanilla JavaScript | Zero Frameworks | Strict textContent
  */
 
 // Application State
@@ -10,19 +9,20 @@ const state = {
   tasks: [],
   activeTaskId: null,
   isGlanceMode: false,
-  windowMode: "normal",
+  windowMode: "normal", // "normal" (wallpaper widget), "desktop" (pinned behind all), "top" (hover)
   isPinnedAlwaysOnTop: false,
+  selectedPriority: 0,
   lastDeletedTask: null,
   audioCtx: null,
 };
 
-// Tauri IPC Bridge Wrapper
+// Tauri IPC Bridge
 const tauri = {
   invoke: async (cmd, args = {}) => {
-    if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
+    if (window.__TAURI__?.core?.invoke) {
       return await window.__TAURI__.core.invoke(cmd, args);
     }
-    if (window.__TAURI__ && window.__TAURI__.invoke) {
+    if (window.__TAURI__?.invoke) {
       return await window.__TAURI__.invoke(cmd, args);
     }
     console.warn(`[Tauri Mock Invoke] ${cmd}:`, args);
@@ -30,10 +30,10 @@ const tauri = {
   },
   getCurrentWindow: () => {
     if (window.__TAURI__) {
-      if (window.__TAURI__.webviewWindow && window.__TAURI__.webviewWindow.getCurrentWebviewWindow) {
+      if (window.__TAURI__.webviewWindow?.getCurrentWebviewWindow) {
         return window.__TAURI__.webviewWindow.getCurrentWebviewWindow();
       }
-      if (window.__TAURI__.window && window.__TAURI__.window.getCurrentWindow) {
+      if (window.__TAURI__.window?.getCurrentWindow) {
         return window.__TAURI__.window.getCurrentWindow();
       }
     }
@@ -45,21 +45,51 @@ const tauri = {
 // Initialization
 // ==========================================================================
 document.addEventListener("DOMContentLoaded", async () => {
+  renderDate();
   setupEventListeners();
   await loadSavedSettings();
   await loadTasks();
 });
 
+function renderDate() {
+  const dateEl = document.getElementById("widget-date-display");
+  if (!dateEl) return;
+  const now = new Date();
+  const options = { weekday: "short", month: "short", day: "numeric" };
+  const formatted = now.toLocaleDateString("en-US", options).toUpperCase();
+  dateEl.textContent = `TODAY • ${formatted}`;
+}
+
+// ==========================================================================
+// Event Listeners & Controls
+// ==========================================================================
 function setupEventListeners() {
-  // Quick Add Form
   const form = document.getElementById("task-creator-form");
   const input = document.getElementById("task-title-input");
+
+  // Quick Priority Chips
+  document.querySelectorAll(".quick-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const tag = chip.dataset.tag;
+      if (chip.classList.contains("active")) {
+        chip.classList.remove("active");
+        state.selectedPriority = 0;
+      } else {
+        document.querySelectorAll(".quick-chip").forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+        state.selectedPriority = tag === "!high" ? 2 : 1;
+      }
+      input.focus();
+    });
+  });
+
+  // Task Creation (Enter or Submit Button)
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const rawVal = input.value.trim();
     if (!rawVal) return;
 
-    let priority = 0;
+    let priority = state.selectedPriority;
     let cleanTitle = rawVal;
 
     if (cleanTitle.includes("!high") || cleanTitle.includes("!urgent")) {
@@ -77,21 +107,23 @@ function setupEventListeners() {
       await tauri.invoke("add_task", {
         title: cleanTitle,
         priority: priority,
-        listId: null,
-        dueAt: null,
       });
+
       input.value = "";
+      state.selectedPriority = 0;
+      document.querySelectorAll(".quick-chip").forEach((c) => c.classList.remove("active"));
       playPopSound();
       await loadTasks();
     } catch (err) {
       console.error("Failed to add task:", err);
+      showToast("Error adding task: " + String(err));
     }
   });
 
-  // Filter View Tabs
-  document.querySelectorAll(".view-tab").forEach((tab) => {
+  // Filter Tabs
+  document.querySelectorAll(".filter-tab").forEach((tab) => {
     tab.addEventListener("click", async () => {
-      document.querySelectorAll(".view-tab").forEach((t) => t.classList.remove("active"));
+      document.querySelectorAll(".filter-tab").forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
       state.currentFilter = tab.dataset.filter;
       await loadTasks();
@@ -160,23 +192,23 @@ function setupEventListeners() {
 
     await tauri.invoke("delete_task", { id: state.activeTaskId });
     closeDrawer();
-    showToast("Task deleted", undoDelete);
+    showToast("Task removed", undoDelete);
     await loadTasks();
   });
 
-  // Add Subtask Form
+  // Subtasks Add
   document.getElementById("subtask-add-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     if (!state.activeTaskId) return;
-    const input = document.getElementById("subtask-add-input");
-    const title = input.value.trim();
-    if (!title) return;
+    const subInput = document.getElementById("subtask-add-input");
+    const subTitle = subInput.value.trim();
+    if (!subTitle) return;
 
     await tauri.invoke("add_subtask", {
       taskId: state.activeTaskId,
-      title: title,
+      title: subTitle,
     });
-    input.value = "";
+    subInput.value = "";
     playPopSound();
     await refreshSubtasks(state.activeTaskId);
     await loadTasks();
@@ -204,7 +236,7 @@ function setupEventListeners() {
     const val = e.target.value;
     opacityLabel.textContent = `${val}%`;
     const alpha = val / 100;
-    document.documentElement.style.setProperty("--bg-deep", `rgba(12, 14, 20, ${alpha})`);
+    document.documentElement.style.setProperty("--bg-deep", `rgba(14, 17, 26, ${alpha})`);
     tauri.invoke("save_setting", { key: "opacity", value: String(val) });
   });
 
@@ -220,7 +252,7 @@ function setupEventListeners() {
     });
   });
 
-  // Pomodoro Focus Timer Logic
+  // Pomodoro Focus Timer
   let pomoSeconds = 25 * 60;
   let pomoInterval = null;
   const pomoDisplay = document.getElementById("pomodoro-timer-display");
@@ -247,11 +279,9 @@ function setupEventListeners() {
         } else {
           clearInterval(pomoInterval);
           pomoInterval = null;
-          pomoSeconds = 25 * 60;
           btnPomoToggle.textContent = "Start Focus";
-          updatePomoDisplay();
           playPopSound();
-          showToast("🎉 Pomodoro session finished! Take a 5 min break.");
+          showToast("Focus session complete! 🎉");
         }
       }, 1000);
     }
@@ -267,43 +297,8 @@ function setupEventListeners() {
     updatePomoDisplay();
   });
 
-  // Export Data JSON
-  document.getElementById("btn-export-json").addEventListener("click", async () => {
-    try {
-      const dataStr = await tauri.invoke("export_data");
-      const blob = new Blob([dataStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `tododo-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast("Data exported successfully");
-    } catch (err) {
-      console.error("Export failed:", err);
-    }
-  });
-
-  // Import Data JSON
-  document.getElementById("input-import-json").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const jsonStr = event.target.result;
-        const count = await tauri.invoke("import_data", { jsonStr });
-        showToast(`Imported ${count} tasks`);
-        await loadTasks();
-      } catch (err) {
-        console.error("Import failed:", err);
-      }
-    };
-    reader.readAsText(file);
-  });
-
-  // Keyboard Shortcuts: Tab toggles Glance Mode, Esc closes Drawer, Ctrl+Z undoes delete
-  document.addEventListener("keydown", (e) => {
+  // Global Keyboard Shortcuts
+  window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeDrawer();
       document.getElementById("settings-modal").classList.remove("open");
@@ -325,9 +320,10 @@ function setupEventListeners() {
 async function loadTasks() {
   try {
     const tasks = await tauri.invoke("get_tasks", { filter: state.currentFilter });
-    state.tasks = tasks;
+    state.tasks = tasks || [];
     renderTasks();
     updateGlancePill();
+    updateProgressFooter();
   } catch (err) {
     console.error("Failed to load tasks:", err);
   }
@@ -352,7 +348,8 @@ function renderTasks() {
   const doneTasks = state.tasks.filter((t) => t.done);
 
   // Update header stats
-  taskStats.textContent = `Today · ${regularTasks.length + pinnedTasks.length} left`;
+  const activeCount = regularTasks.length + pinnedTasks.length;
+  taskStats.textContent = `${activeCount} left`;
 
   // Pinned Section
   if (pinnedTasks.length > 0) {
@@ -376,65 +373,44 @@ function renderTasks() {
     completedGroup.style.display = "none";
   }
 
-  // Empty state
-  if (state.tasks.length === 0) {
-    emptyState.style.display = "block";
+  // Empty State
+  if (pinnedTasks.length === 0 && regularTasks.length === 0 && doneTasks.length === 0) {
+    emptyState.style.display = "flex";
   } else {
     emptyState.style.display = "none";
   }
 }
 
-/**
- * Creates a single task row using pure textContent (No innerHTML security issues)
- */
+function updateProgressFooter() {
+  const total = state.tasks.length;
+  const done = state.tasks.filter((t) => t.done).length;
+  const fill = document.getElementById("progress-bar-fill");
+  const text = document.getElementById("footer-progress-text");
+
+  if (total > 0) {
+    const pct = Math.round((done / total) * 100);
+    fill.style.width = `${pct}%`;
+    text.textContent = `${done} of ${total} completed (${pct}%)`;
+  } else {
+    fill.style.width = "0%";
+    text.textContent = "0 tasks";
+  }
+}
+
+// ==========================================================================
+// Task Row Creation (Phone-Widget Micro-Card)
+// ==========================================================================
 function createTaskRow(task) {
   const row = document.createElement("div");
   row.className = `task-row ${task.done ? "completed" : ""}`;
-  row.dataset.id = task.id;
-  row.draggable = !task.done; // Uncompleted tasks are draggable
+  row.dataset.taskId = task.id;
 
-  // Drag and Drop Event Listeners
-  row.addEventListener("dragstart", (e) => {
-    row.classList.add("dragging");
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", task.id);
-  });
-
-  row.addEventListener("dragend", () => {
-    row.classList.remove("dragging");
-  });
-
-  row.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  });
-
-  row.addEventListener("drop", async (e) => {
-    e.preventDefault();
-    const draggedId = e.dataTransfer.getData("text/plain");
-    const targetId = task.id;
-    if (!draggedId || draggedId === targetId) return;
-
-    const uncompleted = state.tasks.filter((t) => !t.done);
-    const fromIdx = uncompleted.findIndex((t) => t.id === draggedId);
-    const toIdx = uncompleted.findIndex((t) => t.id === targetId);
-
-    if (fromIdx !== -1 && toIdx !== -1) {
-      const [moved] = uncompleted.splice(fromIdx, 1);
-      uncompleted.splice(toIdx, 0, moved);
-      const reorderedIds = uncompleted.map((t) => t.id);
-
-      await tauri.invoke("reorder_tasks", { taskIds: reorderedIds });
-      playPopSound();
-      await loadTasks();
-    }
-  });
-
-  // Checkbox Box
+  // Spring Circular Checkbox
   const checkbox = document.createElement("div");
   checkbox.className = `checkbox-box ${task.done ? "checked" : ""}`;
   checkbox.setAttribute("role", "checkbox");
   checkbox.setAttribute("aria-checked", task.done ? "true" : "false");
+  checkbox.title = task.done ? "Mark as pending" : "Mark as complete";
 
   const tickSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   tickSvg.setAttribute("class", "checkbox-tick");
@@ -455,13 +431,13 @@ function createTaskRow(task) {
     await loadTasks();
   });
 
-  // Task Info (Title & Meta)
+  // Task Info
   const info = document.createElement("div");
   info.className = "task-info";
 
   const title = document.createElement("span");
   title.className = "task-title";
-  title.textContent = task.title; // Safe textContent
+  title.textContent = task.title; // Strict textContent
 
   // Double click inline edit
   title.addEventListener("dblclick", (e) => {
@@ -477,10 +453,10 @@ function createTaskRow(task) {
     const prioChip = document.createElement("span");
     if (task.priority === 2) {
       prioChip.className = "priority-chip priority-high";
-      prioChip.textContent = "High";
+      prioChip.textContent = "HIGH";
     } else if (task.priority === 1) {
       prioChip.className = "priority-chip priority-med";
-      prioChip.textContent = "Medium";
+      prioChip.textContent = "MED";
     }
     meta.appendChild(prioChip);
   }
@@ -496,25 +472,16 @@ function createTaskRow(task) {
   info.appendChild(title);
   if (meta.children.length > 0) info.appendChild(meta);
 
-  // Pin icon toggle button
+  // Micro Actions Cluster (Pin + Instant Delete)
+  const actions = document.createElement("div");
+  actions.className = "row-actions";
+
+  // Pin Button
   const pinBtn = document.createElement("button");
-  pinBtn.className = `icon-btn pin-btn ${task.pinned ? "pinned" : ""}`;
+  pinBtn.className = `action-mini-btn pin-btn ${task.pinned ? "pinned" : ""}`;
   pinBtn.title = task.pinned ? "Unpin task" : "Pin to top";
-  pinBtn.setAttribute("aria-label", "Toggle pin");
-
-  const pinSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  pinSvg.setAttribute("class", "pin-icon");
-  pinSvg.setAttribute("width", "12");
-  pinSvg.setAttribute("height", "12");
-  pinSvg.setAttribute("viewBox", "0 0 24 24");
-  pinSvg.setAttribute("fill", task.pinned ? "currentColor" : "none");
-  pinSvg.setAttribute("stroke", "currentColor");
-  pinSvg.setAttribute("stroke-width", "2");
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", "M5 17h14v-2l-2-3V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v6l-2 3v2z");
-  pinSvg.appendChild(path);
-  pinBtn.appendChild(pinSvg);
-
+  pinBtn.setAttribute("aria-label", "Pin task");
+  pinBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="${task.pinned ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M5 17h14v-2l-2-3V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v6l-2 3v2z"/></svg>`;
   pinBtn.addEventListener("click", async (e) => {
     e.stopPropagation();
     await tauri.invoke("update_task", { id: task.id, pinned: !task.pinned });
@@ -522,11 +489,28 @@ function createTaskRow(task) {
     await loadTasks();
   });
 
+  // Direct Delete Button (Instant Remove!)
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "action-mini-btn delete-btn";
+  deleteBtn.title = "Delete task";
+  deleteBtn.setAttribute("aria-label", "Delete task");
+  deleteBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  deleteBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    state.lastDeletedTask = task;
+    await tauri.invoke("delete_task", { id: task.id });
+    showToast("Task removed", undoDelete);
+    await loadTasks();
+  });
+
+  actions.appendChild(pinBtn);
+  actions.appendChild(deleteBtn);
+
   row.appendChild(checkbox);
   row.appendChild(info);
-  row.appendChild(pinBtn);
+  row.appendChild(actions);
 
-  // Open Drawer on Row Click
+  // Open Details Drawer on Row Click (outside of buttons)
   row.addEventListener("click", () => {
     openDrawer(task);
   });
@@ -538,10 +522,11 @@ function startInlineEditing(titleEl, task) {
   const input = document.createElement("input");
   input.type = "text";
   input.value = task.title;
-  input.className = "creator-input";
+  input.className = "capsule-input";
   input.style.border = "1px solid var(--accent-indigo)";
-  input.style.borderRadius = "4px";
-  input.style.padding = "2px 6px";
+  input.style.borderRadius = "6px";
+  input.style.padding = "2px 8px";
+  input.style.background = "rgba(0, 0, 0, 0.4)";
 
   titleEl.replaceWith(input);
   input.focus();
@@ -564,7 +549,7 @@ function startInlineEditing(titleEl, task) {
 }
 
 // ==========================================================================
-// Details Drawer Management
+// Details Drawer
 // ==========================================================================
 async function openDrawer(task) {
   state.activeTaskId = task.id;
@@ -575,7 +560,6 @@ async function openDrawer(task) {
   titleInput.value = task.title;
   notesArea.value = task.notes || "";
 
-  // Set Priority Segment
   document.querySelectorAll("#drawer-priority-picker .segment-btn").forEach((btn) => {
     if (parseInt(btn.dataset.priority, 10) === task.priority) {
       btn.classList.add("active");
@@ -598,80 +582,76 @@ async function refreshSubtasks(taskId) {
     const subtasks = await tauri.invoke("get_subtasks", { taskId });
     const list = document.getElementById("drawer-subtasks-list");
     const progressText = document.getElementById("drawer-subtask-progress");
-
     list.replaceChildren();
 
-    const doneCount = subtasks.filter((s) => s.done).length;
-    progressText.textContent = `${doneCount}/${subtasks.length}`;
+    const total = subtasks.length;
+    const done = subtasks.filter((s) => s.done).length;
+    progressText.textContent = `${done}/${total}`;
 
     subtasks.forEach((s) => {
       const item = document.createElement("div");
-      item.className = "subtask-item";
+      item.className = `subtask-item ${s.done ? "done" : ""}`;
 
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = s.done;
-      cb.addEventListener("change", async () => {
-        playPopSound();
+      const check = document.createElement("input");
+      check.type = "checkbox";
+      check.checked = s.done;
+      check.addEventListener("change", async () => {
         await tauri.invoke("toggle_subtask", { id: s.id });
         await refreshSubtasks(taskId);
         await loadTasks();
       });
 
-      const label = document.createElement("span");
-      label.style.flex = "1";
-      label.style.textDecoration = s.done ? "line-through" : "none";
-      label.textContent = s.title;
+      const span = document.createElement("span");
+      span.textContent = s.title;
+      span.style.flex = "1";
 
       const del = document.createElement("button");
-      del.className = "drawer-close";
-      del.textContent = "✕";
+      del.className = "action-mini-btn delete-btn";
+      del.innerHTML = "✕";
       del.addEventListener("click", async () => {
         await tauri.invoke("delete_subtask", { id: s.id });
         await refreshSubtasks(taskId);
         await loadTasks();
       });
 
-      item.appendChild(cb);
-      item.appendChild(label);
+      item.appendChild(check);
+      item.appendChild(span);
       item.appendChild(del);
       list.appendChild(item);
     });
   } catch (err) {
-    console.error("Failed to load subtasks:", err);
+    console.error("Failed to refresh subtasks:", err);
   }
 }
 
 // ==========================================================================
-// Dual Form Factor & Elastic Morph Transitions
+// Glance Pill HUD (Dynamic Island)
 // ==========================================================================
-async function toggleGlanceMode() {
+function toggleGlanceMode() {
   state.isGlanceMode = !state.isGlanceMode;
   const pill = document.getElementById("glance-pill");
   const canvas = document.getElementById("widget-canvas");
   const win = tauri.getCurrentWindow();
 
   if (state.isGlanceMode) {
-    // Elastic rubber collapse animation
     canvas.classList.add("rubber-morph-collapse");
     setTimeout(async () => {
       canvas.style.display = "none";
       canvas.classList.remove("rubber-morph-collapse");
       pill.style.display = "flex";
       pill.classList.add("rubber-morph-expand");
-      if (win && win.setSize) {
-        await win.setSize(new window.__TAURI__.dpi.LogicalSize(320, 48));
+      if (win?.setSize && window.__TAURI__?.dpi?.LogicalSize) {
+        await win.setSize(new window.__TAURI__.dpi.LogicalSize(360, 48));
       }
-    }, 200);
+    }, 180);
   } else {
-    // Elastic rubber expand animation
     pill.classList.add("rubber-morph-collapse");
     setTimeout(async () => {
       pill.style.display = "none";
       pill.classList.remove("rubber-morph-collapse");
       canvas.style.display = "flex";
       canvas.classList.add("rubber-morph-expand");
-      if (win && win.setSize) {
+      if (win?.setSize && window.__TAURI__?.dpi?.LogicalSize) {
         await win.setSize(new window.__TAURI__.dpi.LogicalSize(360, 580));
       }
     }, 180);
@@ -692,17 +672,20 @@ function updateGlancePill() {
   if (uncompleted.length > 0) {
     pillTitle.textContent = uncompleted[0].title;
   } else {
-    pillTitle.textContent = "All tasks completed! 🎉";
+    pillTitle.textContent = "All caught up! 🎉";
   }
 
   if (total > 0) {
     const percent = (done.length / total) * 100;
     progressPath.setAttribute("stroke-dasharray", `${percent}, 100`);
   } else {
-    progressPath.setAttribute("stroke-dasharray", `0, 100`);
+    progressPath.setAttribute("stroke-dasharray", "0, 100");
   }
 }
 
+// ==========================================================================
+// Window Mode & Position
+// ==========================================================================
 async function applyWindowMode(mode) {
   state.windowMode = mode;
   state.isPinnedAlwaysOnTop = (mode === "top");
@@ -711,11 +694,10 @@ async function applyWindowMode(mode) {
   if (pinBtn) {
     pinBtn.classList.toggle("pinned", state.isPinnedAlwaysOnTop);
     pinBtn.title = state.isPinnedAlwaysOnTop
-      ? "Hovering on Top (Click for Desktop Widget)"
-      : "Desktop Widget on Wallpaper (Click to Hover)";
+      ? "Hovering on Top (Click for Wallpaper Widget)"
+      : "Desktop Wallpaper Widget (Click to Hover on Top)";
   }
 
-  // Update Settings modal segmented control
   document.querySelectorAll("#window-mode-control .segment-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.mode === mode);
   });
@@ -748,7 +730,7 @@ async function loadSavedSettings() {
         const label = document.getElementById("opacity-val-label");
         if (slider) slider.value = val;
         if (label) label.textContent = `${val}%`;
-        document.documentElement.style.setProperty("--bg-deep", `rgba(12, 14, 20, ${val / 100})`);
+        document.documentElement.style.setProperty("--bg-deep", `rgba(14, 17, 26, ${val / 100})`);
       }
       if (settings.accent_color) {
         const color = settings.accent_color;
@@ -761,24 +743,21 @@ async function loadSavedSettings() {
       const mode = settings.window_mode || "normal";
       await applyWindowMode(mode);
 
-      // Restore desktop position if saved
+      // Restore position
       const win = tauri.getCurrentWindow();
       if (win && settings.window_pos_x && settings.window_pos_y && win.setPosition) {
         const x = parseInt(settings.window_pos_x, 10);
         const y = parseInt(settings.window_pos_y, 10);
-        if (!isNaN(x) && !isNaN(y)) {
+        if (!isNaN(x) && !isNaN(y) && window.__TAURI__?.dpi?.PhysicalPosition) {
           try {
-            if (window.__TAURI__?.dpi?.PhysicalPosition) {
-              await win.setPosition(new window.__TAURI__.dpi.PhysicalPosition(x, y));
-            }
+            await win.setPosition(new window.__TAURI__.dpi.PhysicalPosition(x, y));
           } catch (e) {
             console.warn("Could not restore window position:", e);
           }
         }
       }
 
-      // Track window movement to remember position on the desktop
-      if (win && win.onMoved) {
+      if (win?.onMoved) {
         try {
           win.onMoved(({ payload }) => {
             if (payload && typeof payload.x === "number" && typeof payload.y === "number") {
@@ -787,7 +766,7 @@ async function loadSavedSettings() {
             }
           });
         } catch (e) {
-          console.warn("onMoved listener error:", e);
+          console.warn("onMoved error:", e);
         }
       }
     }
@@ -807,10 +786,15 @@ function showToast(message, undoCallback) {
   msg.textContent = message;
   toast.classList.add("show");
 
-  undoBtn.onclick = () => {
-    toast.classList.remove("show");
-    if (undoCallback) undoCallback();
-  };
+  if (undoCallback) {
+    undoBtn.style.display = "inline-block";
+    undoBtn.onclick = () => {
+      toast.classList.remove("show");
+      undoCallback();
+    };
+  } else {
+    undoBtn.style.display = "none";
+  }
 
   setTimeout(() => {
     toast.classList.remove("show");
@@ -823,15 +807,13 @@ async function undoDelete() {
   await tauri.invoke("add_task", {
     title: t.title,
     priority: t.priority,
-    listId: t.list_id,
-    dueAt: t.due_at,
   });
   state.lastDeletedTask = null;
   await loadTasks();
 }
 
 // ==========================================================================
-// Micro-Sound Synthesis (Web Audio API)
+// Sound Effects
 // ==========================================================================
 function playPopSound() {
   try {
@@ -848,7 +830,7 @@ function playPopSound() {
     osc.frequency.setValueAtTime(440, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.05);
 
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
 
     osc.connect(gain);
@@ -856,27 +838,24 @@ function playPopSound() {
 
     osc.start();
     osc.stop(ctx.currentTime + 0.05);
-  } catch (err) {
-    // Audio context silent fallback
-  }
+  } catch (e) {}
 }
 
 // ==========================================================================
-// Development Fallback Mock
+// Fallback Mock (Only if running in plain browser)
 // ==========================================================================
 function mockInvoke(cmd, args) {
   if (cmd === "get_tasks") {
     return [
-      { id: "1", title: "Complete Tododo desktop widget", done: false, pinned: true, priority: 2, subtask_count: 3, subtasks_done: 2 },
-      { id: "2", title: "Enjoy Obsidian Glass aesthetic", done: false, pinned: false, priority: 1 },
-      { id: "3", title: "Review The God's Plan documentation", done: true, pinned: false, priority: 0 },
+      { id: "1", title: "Review product design with team", done: false, pinned: true, priority: 2, subtask_count: 3, subtasks_done: 1 },
+      { id: "2", title: "Complete Tododo wallpaper widget", done: false, pinned: false, priority: 1 },
+      { id: "3", title: "Workout 45 mins", done: true, pinned: false, priority: 0 },
     ];
   }
   if (cmd === "get_subtasks") {
     return [
-      { id: "s1", title: "Scaffold Tauri v2 and SQLite", done: true },
-      { id: "s2", title: "Build Obsidian Glass design system", done: true },
-      { id: "s3", title: "Test elastic rubber morphing", done: false },
+      { id: "s1", title: "Verify glass transparency", done: true },
+      { id: "s2", title: "Test direct task delete button", done: false },
     ];
   }
   return [];

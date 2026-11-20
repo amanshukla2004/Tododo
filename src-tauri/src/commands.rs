@@ -22,17 +22,17 @@ pub fn get_tasks(state: DbState, filter: Option<String>) -> Result<Vec<Task>, St
     );
 
     let where_clause = match filter_val.as_str() {
-        "today" => "WHERE t.done = 0 AND (t.due_at IS NULL OR date(t.due_at) <= date('now'))",
-        "upcoming" => "WHERE t.done = 0 AND date(t.due_at) > date('now') AND date(t.due_at) <= date('now', '+7 days')",
+        "today" => "WHERE (t.due_at IS NULL OR date(t.due_at) <= date('now'))",
+        "upcoming" => "WHERE date(t.due_at) > date('now') AND date(t.due_at) <= date('now', '+7 days')",
         "overdue" => "WHERE t.done = 0 AND t.due_at IS NOT NULL AND datetime(t.due_at) < datetime('now')",
         "completed" => "WHERE t.done = 1",
-        "all" => "WHERE t.done = 0",
-        list if list.starts_with("list_") => "WHERE t.done = 0 AND t.list_id = ?",
-        _ => "WHERE t.done = 0",
+        "all" => "",
+        list if list.starts_with("list_") => "WHERE t.list_id = ?",
+        _ => "",
     };
 
     query.push_str(where_clause);
-    query.push_str(" ORDER BY t.pinned DESC, t.sort_order ASC, t.created_at DESC");
+    query.push_str(" ORDER BY t.done ASC, t.pinned DESC, t.sort_order ASC, t.created_at DESC");
 
     let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
 
