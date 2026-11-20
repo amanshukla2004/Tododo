@@ -49,7 +49,7 @@ impl Database {
     }
 
     /// Incremental migration engine using schema_version table
-    fn migrate(conn: &mut Connection) -> Result<(), String> {
+    pub fn migrate(conn: &mut Connection) -> Result<(), String> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS schema_version (
                 version INTEGER PRIMARY KEY,
@@ -143,6 +143,11 @@ impl Database {
                     ('list_work', 'Work', '#10b981'),
                     ('list_study', 'Study', '#f59e0b');
 
+                -- Seed starter tasks
+                INSERT OR IGNORE INTO tasks (id, title, notes, done, pinned, priority, due_at, list_id, repeat_rule, sort_order) VALUES
+                    ('task_welcome_1', 'Welcome to Tododo! Press Enter to add a new task', 'You can type !high or !med when creating tasks.', 0, 1, 1, NULL, 'list_personal', 'none', -2.0),
+                    ('task_welcome_2', 'Click any task for notes, subtasks, & Pomodoro focus', 'Try out the timer or add steps to complete.', 0, 0, 0, NULL, 'list_work', 'none', -1.0);
+
                 -- Seed default settings
                 INSERT OR IGNORE INTO settings (key, value) VALUES
                     ('theme', 'dark'),
@@ -164,6 +169,81 @@ impl Database {
                 .map_err(|e| format!("Failed to commit migration v1: {}", e))?;
         }
 
+        // Version 2: Ensure starter tasks exist
+        if current_version < 2 {
+            let tx = conn
+                .transaction()
+                .map_err(|e| format!("Failed to start migration transaction: {}", e))?;
+
+            tx.execute_batch(
+                "
+                INSERT OR IGNORE INTO tasks (id, title, notes, done, pinned, priority, due_at, list_id, repeat_rule, sort_order) VALUES
+                    ('task_welcome_1', 'Welcome to Tododo! Press Enter to add a new task', 'You can type !high or !med when creating tasks.', 0, 1, 1, NULL, 'list_personal', 'none', -2.0),
+                    ('task_welcome_2', 'Click any task for notes, subtasks, & Pomodoro focus', 'Try out the timer or add steps to complete.', 0, 0, 0, NULL, 'list_work', 'none', -1.0);
+
+                INSERT INTO schema_version (version, applied_at)
+                VALUES (2, datetime('now'));
+                ",
+            )
+            .map_err(|e| format!("Failed to apply migration v2: {}", e))?;
+
+            tx.commit()
+                .map_err(|e| format!("Failed to commit migration v2: {}", e))?;
+        }
+
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::params;
+
+    #[test]
+    fn test_db_migration_and_crud() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        Database::migrate(&mut conn).unwrap();
+
+        // 1. Test task insertion (the exact query from add_task)
+        let id = "task_test_1";
+        let title = "Test task";
+        let prio = 2;
+        let due_at: Option<String> = None;
+        let list_id: Option<String> = None;
+        let new_order = -1.0;
+
+        let insert_res = conn.execute(
+            "INSERT INTO tasks (id, title, notes, done, pinned, priority, due_at, list_id, repeat_rule, sort_order)
+             VALUES (?, ?, '', 0, 0, ?, ?, ?, 'none', ?)",
+            params![id, title.trim(), prio, due_at, list_id, new_order],
+        );
+        assert!(insert_res.is_ok(), "Insert failed: {:?}", insert_res.err());
+
+        // 2. Query task back
+        let (fetched_id, fetched_title, fetched_prio): (String, String, i64) = conn
+            .query_row(
+                "SELECT id, title, priority FROM tasks WHERE id = ?",
+                params![id],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(fetched_id, id);
+        assert_eq!(fetched_title, title);
+        assert_eq!(fetched_prio, prio);
+
+        // 3. Toggle task done
+        let toggle_res = conn.execute(
+            "UPDATE tasks SET done = 1, done_at = datetime('now') WHERE id = ?",
+            params![id],
+        );
+        assert!(toggle_res.is_ok());
+
+        // 4. Subtasks
+        let sub_res = conn.execute(
+            "INSERT INTO subtasks (id, task_id, title, done, sort_order) VALUES (?, ?, ?, 0, 0.0)",
+            params!["sub_1", id, "Subtask 1"],
+        );
+        assert!(sub_res.is_ok());
     }
 }

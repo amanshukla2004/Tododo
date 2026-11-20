@@ -4,12 +4,12 @@
    ========================================================================== */
 
 :root {
-  --bg-deep: rgba(12, 14, 20, 0.88);
-  --bg-surface: rgba(22, 26, 38, 0.75);
-  --bg-surface-hover: rgba(30, 35, 51, 0.85);
-  --bg-card: rgba(28, 32, 45, 0.6);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(129, 140, 248, 0.4);
+  --bg-deep: rgba(12, 14, 20, 0.72);
+  --bg-surface: rgba(22, 26, 38, 0.65);
+  --bg-surface-hover: rgba(30, 35, 51, 0.78);
+  --bg-card: rgba(28, 32, 45, 0.50);
+  --border-subtle: rgba(255, 255, 255, 0.10);
+  --border-active: rgba(129, 140, 248, 0.45);
   --text-primary: #f1f3f9;
   --text-secondary: #9da4b8;
   --text-dim: #5d657d;

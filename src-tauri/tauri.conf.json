@@ -21,8 +21,11 @@
         "resizable": true,
         "transparent": true,
         "decorations": false,
-        "alwaysOnTop": true,
+        "alwaysOnTop": false,
         "shadow": true,
+        "windowEffects": {
+          "effects": ["acrylic"]
+        },
         "fullscreen": false
       }
     ],

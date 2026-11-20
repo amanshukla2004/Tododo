@@ -41,7 +41,7 @@
       </div>
 
       <div class="header-controls">
-        <button class="header-btn" id="btn-toggle-pin" title="Toggle Pin Always On Top" aria-label="Pin widget">
+        <button class="header-btn" id="btn-toggle-pin" title="Desktop Widget Mode (Click to Pin on Top)" aria-label="Toggle pin or desktop mode">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-2l-2-3V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v6l-2 3v2z"/></svg>
         </button>
         <button class="header-btn" id="btn-collapse" title="Collapse to Glance Pill" aria-label="Collapse widget">
@@ -186,9 +186,17 @@
     </div>
     <div class="settings-body">
       <div class="drawer-field">
-        <label class="drawer-label">Glass Opacity (<span id="opacity-val-label">85%</span>)</label>
+        <label class="drawer-label">Widget Position Mode</label>
+        <div class="segmented-control" id="window-mode-control">
+          <button class="segment-btn active" data-mode="normal" title="Sits on desktop wallpaper">Desktop</button>
+          <button class="segment-btn" data-mode="desktop" title="Pinned to desktop behind all windows">Background</button>
+          <button class="segment-btn" data-mode="top" title="Always floating on top of windows">Hover on Top</button>
+        </div>
+      </div>
+      <div class="drawer-field">
+        <label class="drawer-label">Glass Opacity (<span id="opacity-val-label">72%</span>)</label>
         <div class="slider-row">
-          <input type="range" min="50" max="100" value="85" class="opacity-slider" id="opacity-slider" />
+          <input type="range" min="30" max="100" value="72" class="opacity-slider" id="opacity-slider" />
         </div>
       </div>
       <div class="drawer-field">

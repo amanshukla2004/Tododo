@@ -10,7 +10,8 @@ const state = {
   tasks: [],
   activeTaskId: null,
   isGlanceMode: false,
-  isPinnedAlwaysOnTop: true,
+  windowMode: "normal",
+  isPinnedAlwaysOnTop: false,
   lastDeletedTask: null,
   audioCtx: null,
 };
@@ -21,12 +22,20 @@ const tauri = {
     if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
       return await window.__TAURI__.core.invoke(cmd, args);
     }
-    console.log(`[Tauri Mock Invoke] ${cmd}:`, args);
+    if (window.__TAURI__ && window.__TAURI__.invoke) {
+      return await window.__TAURI__.invoke(cmd, args);
+    }
+    console.warn(`[Tauri Mock Invoke] ${cmd}:`, args);
     return mockInvoke(cmd, args);
   },
   getCurrentWindow: () => {
-    if (window.__TAURI__ && window.__TAURI__.window && window.__TAURI__.window.getCurrentWindow) {
-      return window.__TAURI__.window.getCurrentWindow();
+    if (window.__TAURI__) {
+      if (window.__TAURI__.webviewWindow && window.__TAURI__.webviewWindow.getCurrentWebviewWindow) {
+        return window.__TAURI__.webviewWindow.getCurrentWebviewWindow();
+      }
+      if (window.__TAURI__.window && window.__TAURI__.window.getCurrentWindow) {
+        return window.__TAURI__.window.getCurrentWindow();
+      }
     }
     return null;
   }
@@ -37,6 +46,7 @@ const tauri = {
 // ==========================================================================
 document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
+  await loadSavedSettings();
   await loadTasks();
 });
 
@@ -178,6 +188,14 @@ function setupEventListeners() {
   });
   document.getElementById("btn-close-settings").addEventListener("click", () => {
     document.getElementById("settings-modal").classList.remove("open");
+  });
+
+  // Window Mode Selector
+  document.querySelectorAll("#window-mode-control .segment-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const mode = btn.dataset.mode;
+      await applyWindowMode(mode);
+    });
   });
 
   const opacitySlider = document.getElementById("opacity-slider");
@@ -685,14 +703,96 @@ function updateGlancePill() {
   }
 }
 
-async function toggleAlwaysOnTop() {
-  state.isPinnedAlwaysOnTop = !state.isPinnedAlwaysOnTop;
-  const pinBtn = document.getElementById("btn-toggle-pin");
-  pinBtn.classList.toggle("pinned", state.isPinnedAlwaysOnTop);
+async function applyWindowMode(mode) {
+  state.windowMode = mode;
+  state.isPinnedAlwaysOnTop = (mode === "top");
 
-  const win = tauri.getCurrentWindow();
-  if (win && win.setAlwaysOnTop) {
-    await win.setAlwaysOnTop(state.isPinnedAlwaysOnTop);
+  const pinBtn = document.getElementById("btn-toggle-pin");
+  if (pinBtn) {
+    pinBtn.classList.toggle("pinned", state.isPinnedAlwaysOnTop);
+    pinBtn.title = state.isPinnedAlwaysOnTop
+      ? "Hovering on Top (Click for Desktop Widget)"
+      : "Desktop Widget on Wallpaper (Click to Hover)";
+  }
+
+  // Update Settings modal segmented control
+  document.querySelectorAll("#window-mode-control .segment-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mode === mode);
+  });
+
+  try {
+    await tauri.invoke("set_window_mode", { mode });
+  } catch (err) {
+    console.warn("set_window_mode invoke error:", err);
+  }
+
+  try {
+    await tauri.invoke("save_setting", { key: "window_mode", value: mode });
+  } catch (err) {
+    console.warn("save_setting window_mode error:", err);
+  }
+}
+
+async function toggleAlwaysOnTop() {
+  const nextMode = state.windowMode === "top" ? "normal" : "top";
+  await applyWindowMode(nextMode);
+}
+
+async function loadSavedSettings() {
+  try {
+    const settings = await tauri.invoke("get_settings");
+    if (settings) {
+      if (settings.opacity) {
+        const val = parseInt(settings.opacity, 10);
+        const slider = document.getElementById("opacity-slider");
+        const label = document.getElementById("opacity-val-label");
+        if (slider) slider.value = val;
+        if (label) label.textContent = `${val}%`;
+        document.documentElement.style.setProperty("--bg-deep", `rgba(12, 14, 20, ${val / 100})`);
+      }
+      if (settings.accent_color) {
+        const color = settings.accent_color;
+        document.documentElement.style.setProperty("--accent-indigo", color);
+        document.documentElement.style.setProperty("--accent-glow", `${color}40`);
+        document.querySelectorAll(".color-swatch").forEach((s) => {
+          s.classList.toggle("active", s.dataset.color === color);
+        });
+      }
+      const mode = settings.window_mode || "normal";
+      await applyWindowMode(mode);
+
+      // Restore desktop position if saved
+      const win = tauri.getCurrentWindow();
+      if (win && settings.window_pos_x && settings.window_pos_y && win.setPosition) {
+        const x = parseInt(settings.window_pos_x, 10);
+        const y = parseInt(settings.window_pos_y, 10);
+        if (!isNaN(x) && !isNaN(y)) {
+          try {
+            if (window.__TAURI__?.dpi?.PhysicalPosition) {
+              await win.setPosition(new window.__TAURI__.dpi.PhysicalPosition(x, y));
+            }
+          } catch (e) {
+            console.warn("Could not restore window position:", e);
+          }
+        }
+      }
+
+      // Track window movement to remember position on the desktop
+      if (win && win.onMoved) {
+        try {
+          win.onMoved(({ payload }) => {
+            if (payload && typeof payload.x === "number" && typeof payload.y === "number") {
+              tauri.invoke("save_setting", { key: "window_pos_x", value: String(payload.x) });
+              tauri.invoke("save_setting", { key: "window_pos_y", value: String(payload.y) });
+            }
+          });
+        } catch (e) {
+          console.warn("onMoved listener error:", e);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("loadSavedSettings error:", err);
   }
 }
 

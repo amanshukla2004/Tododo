@@ -97,7 +97,7 @@ pub fn add_task(
 
     conn.execute(
         "INSERT INTO tasks (id, title, notes, done, pinned, priority, due_at, list_id, repeat_rule, sort_order)
-         VALUES (?, ?, '', 0, 0, ?, ?, 'none', ?)",
+         VALUES (?, ?, '', 0, 0, ?, ?, ?, 'none', ?)",
         params![id, title.trim(), prio, due_at, list_id, new_order],
     )
     .map_err(|e| e.to_string())?;
@@ -415,6 +415,26 @@ pub fn import_data(state: DbState, json_str: String) -> Result<usize, String> {
 
     tx.commit().map_err(|e| e.to_string())?;
     Ok(count)
+}
+
+/// Adjust window Z-level: "desktop" (pinned to desktop), "top" (hover on top), or "normal" (standard desktop widget)
+#[tauri::command]
+pub fn set_window_mode(window: tauri::WebviewWindow, mode: String) -> Result<(), String> {
+    match mode.as_str() {
+        "desktop" => {
+            let _ = window.set_always_on_top(false);
+            let _ = window.set_always_on_bottom(true);
+        }
+        "top" => {
+            let _ = window.set_always_on_bottom(false);
+            let _ = window.set_always_on_top(true);
+        }
+        _ => {
+            let _ = window.set_always_on_bottom(false);
+            let _ = window.set_always_on_top(false);
+        }
+    }
+    Ok(())
 }
 
 fn chrono_now_iso() -> String {
