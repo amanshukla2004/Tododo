@@ -698,8 +698,126 @@ html, body {
 }
 
 /* ==========================================================================
-   5. Toast Notification
+   Elastic Rubber / Cloth Stretching Transition Physics
    ========================================================================== */
+@keyframes rubberStretchDown {
+  0% {
+    transform: scale(0.92, 0.4);
+    opacity: 0.3;
+    border-radius: 9999px;
+  }
+  50% {
+    transform: scale(1.04, 1.08);
+    opacity: 0.85;
+    border-radius: 24px;
+  }
+  80% {
+    transform: scale(0.98, 0.97);
+    border-radius: 16px;
+  }
+  100% {
+    transform: scale(1, 1);
+    opacity: 1;
+    border-radius: var(--radius-widget);
+  }
+}
+
+@keyframes rubberStretchUp {
+  0% {
+    transform: scale(1, 1);
+    opacity: 1;
+  }
+  40% {
+    transform: scale(1.06, 0.7);
+    border-radius: 40px;
+  }
+  75% {
+    transform: scale(0.96, 1.15);
+    border-radius: 9999px;
+  }
+  100% {
+    transform: scale(1, 1);
+    opacity: 1;
+    border-radius: 9999px;
+  }
+}
+
+.rubber-morph-expand {
+  animation: rubberStretchDown 0.45s var(--spring-bounce) forwards;
+}
+
+.rubber-morph-collapse {
+  animation: rubberStretchUp 0.38s var(--spring-bounce) forwards;
+}
+
+/* Settings Modal */
+.settings-modal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-deep);
+  backdrop-filter: blur(36px);
+  border-radius: var(--radius-widget);
+  border: 1px solid var(--border-subtle);
+  display: none;
+  flex-direction: column;
+  z-index: 150;
+  animation: rubberStretchDown 0.35s var(--spring-bounce);
+}
+
+.settings-modal.open {
+  display: flex;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.opacity-slider {
+  flex: 1;
+  accent-color: var(--accent-indigo);
+  cursor: pointer;
+}
+
+.color-swatches {
+  display: flex;
+  gap: 10px;
+}
+
+.color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s var(--spring-bounce);
+}
+
+.color-swatch:hover, .color-swatch.active {
+  transform: scale(1.2);
+  border-color: #fff;
+}
+
 .toast-notification {
   position: absolute;
   bottom: 40px;

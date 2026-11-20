@@ -166,6 +166,39 @@
     </div>
   </aside>
 
+  <!-- Settings Modal -->
+  <aside class="settings-modal" id="settings-modal">
+    <div class="settings-header">
+      <span class="drawer-title">Preferences</span>
+      <button class="drawer-close" id="btn-close-settings" aria-label="Close settings">✕</button>
+    </div>
+    <div class="settings-body">
+      <div class="drawer-field">
+        <label class="drawer-label">Glass Opacity (<span id="opacity-val-label">85%</span>)</label>
+        <div class="slider-row">
+          <input type="range" min="50" max="100" value="85" class="opacity-slider" id="opacity-slider" />
+        </div>
+      </div>
+      <div class="drawer-field">
+        <label class="drawer-label">Accent Theme</label>
+        <div class="color-swatches" id="color-swatches">
+          <span class="color-swatch active" data-color="#818cf8" style="background: #818cf8;" title="Electric Indigo"></span>
+          <span class="color-swatch" data-color="#34d399" style="background: #34d399;" title="Emerald Glow"></span>
+          <span class="color-swatch" data-color="#f472b6" style="background: #f472b6;" title="Rose Pink"></span>
+          <span class="color-swatch" data-color="#fbbf24" style="background: #fbbf24;" title="Amber Gold"></span>
+          <span class="color-swatch" data-color="#38bdf8" style="background: #38bdf8;" title="Sky Cyan"></span>
+        </div>
+      </div>
+      <div class="drawer-field">
+        <label class="drawer-label">Feedback Sound</label>
+        <div class="segmented-control" id="sound-toggle-control">
+          <button class="segment-btn active" data-sound="true">Enabled</button>
+          <button class="segment-btn" data-sound="false">Mute</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
   <!-- Quick Undo Toast Notification -->
   <div class="toast-notification" id="toast-notification">
     <span class="toast-message" id="toast-message">Task deleted</span>

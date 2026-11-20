@@ -172,6 +172,36 @@ function setupEventListeners() {
     await loadTasks();
   });
 
+  // Settings Modal Controls
+  document.getElementById("btn-settings-toggle").addEventListener("click", () => {
+    document.getElementById("settings-modal").classList.add("open");
+  });
+  document.getElementById("btn-close-settings").addEventListener("click", () => {
+    document.getElementById("settings-modal").classList.remove("open");
+  });
+
+  const opacitySlider = document.getElementById("opacity-slider");
+  const opacityLabel = document.getElementById("opacity-val-label");
+  opacitySlider.addEventListener("input", (e) => {
+    const val = e.target.value;
+    opacityLabel.textContent = `${val}%`;
+    const alpha = val / 100;
+    document.documentElement.style.setProperty("--bg-deep", `rgba(12, 14, 20, ${alpha})`);
+    tauri.invoke("save_setting", { key: "opacity", value: String(val) });
+  });
+
+  // Color Swatches
+  document.querySelectorAll(".color-swatch").forEach((swatch) => {
+    swatch.addEventListener("click", () => {
+      document.querySelectorAll(".color-swatch").forEach((s) => s.classList.remove("active"));
+      swatch.classList.add("active");
+      const color = swatch.dataset.color;
+      document.documentElement.style.setProperty("--accent-indigo", color);
+      document.documentElement.style.setProperty("--accent-glow", `${color}40`);
+      tauri.invoke("save_setting", { key: "accent_color", value: color });
+    });
+  });
+
   // Keyboard Shortcuts: Tab toggles Glance Mode, Esc closes Drawer
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
@@ -464,19 +494,29 @@ async function toggleGlanceMode() {
   const win = tauri.getCurrentWindow();
 
   if (state.isGlanceMode) {
-    // Morph into Glance Pill
-    canvas.style.display = "none";
-    pill.style.display = "flex";
-    if (win && win.setSize) {
-      await win.setSize(new window.__TAURI__.dpi.LogicalSize(320, 48));
-    }
+    // Elastic rubber collapse animation
+    canvas.classList.add("rubber-morph-collapse");
+    setTimeout(async () => {
+      canvas.style.display = "none";
+      canvas.classList.remove("rubber-morph-collapse");
+      pill.style.display = "flex";
+      pill.classList.add("rubber-morph-expand");
+      if (win && win.setSize) {
+        await win.setSize(new window.__TAURI__.dpi.LogicalSize(320, 48));
+      }
+    }, 200);
   } else {
-    // Morph back into Full Desk Canvas
-    pill.style.display = "none";
-    canvas.style.display = "flex";
-    if (win && win.setSize) {
-      await win.setSize(new window.__TAURI__.dpi.LogicalSize(360, 580));
-    }
+    // Elastic rubber expand animation
+    pill.classList.add("rubber-morph-collapse");
+    setTimeout(async () => {
+      pill.style.display = "none";
+      pill.classList.remove("rubber-morph-collapse");
+      canvas.style.display = "flex";
+      canvas.classList.add("rubber-morph-expand");
+      if (win && win.setSize) {
+        await win.setSize(new window.__TAURI__.dpi.LogicalSize(360, 580));
+      }
+    }, 180);
   }
 }
 
