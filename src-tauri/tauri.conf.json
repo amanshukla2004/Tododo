@@ -14,9 +14,16 @@
     "windows": [
       {
         "title": "Tododo",
-        "width": 420,
+        "label": "main",
+        "width": 360,
         "height": 580,
+        "minWidth": 300,
+        "minHeight": 44,
         "resizable": true,
+        "transparent": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "shadow": true,
         "fullscreen": false
       }
     ],
