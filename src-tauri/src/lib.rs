@@ -1,9 +1,10 @@
 pub mod commands;
 pub mod db;
 pub mod models;
+pub mod reminders;
 pub mod tray;
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -14,8 +15,13 @@ pub fn run() {
             let conn = db::Database::init(&app.handle())
                 .expect("Failed to initialize SQLite database");
 
+            let shared_conn = Arc::new(Mutex::new(conn));
+
             // Register shared Mutex<Connection> in Tauri managed state
-            app.manage(Mutex::new(conn));
+            app.manage(shared_conn.clone());
+
+            // Start background reminder tick worker (checks every 30s)
+            reminders::start_reminder_worker(app.handle().clone(), shared_conn);
 
             // Setup Windows System Tray
             tray::setup_tray(&app.handle())
@@ -56,6 +62,7 @@ pub fn run() {
             commands::delete_subtask,
             commands::get_settings,
             commands::save_setting,
+            commands::snooze_task,
             commands::export_data,
             commands::import_data,
         ])

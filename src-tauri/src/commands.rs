@@ -114,15 +114,20 @@ pub fn add_task(
     Ok(task)
 }
 
-/// Toggle task completion status
+/// Toggle task completion status (and auto-spawns next recurring task if repeat_rule is set)
 #[tauri::command]
 pub fn toggle_task(state: DbState, id: String) -> Result<bool, String> {
     let conn = state.lock().map_err(|e| e.to_string())?;
 
-    let is_done: i64 = conn
-        .query_row("SELECT done FROM tasks WHERE id = ?", params![id], |r| r.get(0))
+    let row_data: (i64, String, String, Option<String>, i64, Option<String>) = conn
+        .query_row(
+            "SELECT done, title, repeat_rule, due_at, priority, list_id FROM tasks WHERE id = ?",
+            params![id],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?)),
+        )
         .map_err(|e| e.to_string())?;
 
+    let (is_done, title, repeat_rule, due_at, prio, list_id) = row_data;
     let new_done = if is_done == 1 { 0 } else { 1 };
     let done_at: Option<String> = if new_done == 1 {
         Some(chrono_now_iso())
@@ -136,7 +141,40 @@ pub fn toggle_task(state: DbState, id: String) -> Result<bool, String> {
     )
     .map_err(|e| e.to_string())?;
 
+    // If completing a recurring task, automatically generate the next occurrence!
+    if new_done == 1 && repeat_rule != "none" {
+        let next_due_modifier = match repeat_rule.as_str() {
+            "daily" => "+1 day",
+            "weekly" => "+7 days",
+            _ => "+1 day",
+        };
+
+        let next_id = format!("task_{}", std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis());
+
+        conn.execute(
+            "INSERT INTO tasks (id, title, notes, done, pinned, priority, due_at, list_id, repeat_rule, sort_order)
+             VALUES (?, ?, '', 0, 0, ?, datetime(COALESCE(?, datetime('now')), ?), ?, ?, 0.0)",
+            params![next_id, title, prio, due_at, next_due_modifier, list_id, repeat_rule],
+        ).map_err(|e| e.to_string())?;
+    }
+
     Ok(new_done == 1)
+}
+
+/// Snooze a task reminder by N minutes
+#[tauri::command]
+pub fn snooze_task(state: DbState, id: String, minutes: i64) -> Result<(), String> {
+    let conn = state.lock().map_err(|e| e.to_string())?;
+    let modifier = format!("+{} minutes", minutes);
+    conn.execute(
+        "UPDATE tasks SET snoozed_until = datetime('now', ?) WHERE id = ?",
+        params![modifier, id],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 /// Update full task details
