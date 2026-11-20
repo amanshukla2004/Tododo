@@ -1,4 +1,4 @@
-/* Slide-over Sheets: Task, Focus, Settings & Glance Pill (Stages 2, 3, 4) */
+/* Slide-over Sheets: Task, Focus, Settings, Glance Pill & Perspectives (Stages 2, 3, 4) */
 .sheet {
   position: absolute;
   inset: 0;
@@ -20,6 +20,7 @@
 .glass-surface.sheet-open > .hero-card,
 .glass-surface.sheet-open > #mini-focus-bar,
 .glass-surface.sheet-open > .filter-row,
+.glass-surface.sheet-open > .list-filter-row,
 .glass-surface.sheet-open > .task-list-container,
 .glass-surface.sheet-open > footer {
   transform: translateX(-12px);
@@ -73,7 +74,7 @@
   animation: fadeIn 160ms ease;
 }
 .prop-picker-modal {
-  width: 100%; max-height: 75%; background: #FFFDFB;
+  width: 100%; max-height: 80%; background: #FFFDFB;
   border-radius: 24px 24px 0 0; padding: 18px 18px 24px 18px;
   box-shadow: 0 -8px 32px rgba(43, 35, 64, 0.2);
   display: flex; flex-direction: column; gap: 10px;
@@ -144,7 +145,7 @@
 .mini-focus-btn:hover { background: #ffffff; }
 
 /* Settings Sheet */
-.settings-section { display: flex; flex-direction: column; gap: 10px; }
+.settings-section { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
 .settings-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.6px; }
 .swatches-grid { display: flex; align-items: center; gap: 10px; }
 .swatch-btn { width: 34px; height: 34px; border-radius: var(--radius-round); border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer; transition: transform 120ms ease; }
@@ -180,11 +181,10 @@
 .btn-settings-action { flex: 1; height: 38px; border-radius: var(--radius-pill); background: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.9); font-size: 12.5px; font-weight: 600; color: var(--ink); }
 .btn-settings-action:hover { background: rgba(255,255,255,0.98); }
 
-/* Glance Pill / Capsule Bar (Customizable size, transparent glass, draggable) */
+/* Glance Pill / Capsule Bar */
 .glance-pill {
   position: absolute; top: 4px; left: 4px;
-  width: var(--capsule-width, 220px);
-  height: 42px;
+  width: var(--capsule-width, 220px); height: 42px;
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, var(--capsule-opacity, 0.45));
   backdrop-filter: blur(24px) saturate(1.8);
@@ -192,20 +192,24 @@
   border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow: 0 4px 16px rgba(120, 90, 180, 0.15);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 10px; z-index: 40;
-  display: none;
-  cursor: grab;
-  user-select: none;
+  padding: 0 10px; z-index: 40; display: none; cursor: grab; user-select: none;
 }
 .glance-pill:active { cursor: grabbing; }
 
 body.glance-mode .widget-container {
   width: calc(var(--capsule-width, 220px) + 8px) !important;
-  height: 50px !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  border-radius: var(--radius-pill) !important;
+  height: 50px !important; background: transparent !important;
+  box-shadow: none !important; border-radius: var(--radius-pill) !important;
 }
 body.glance-mode .backdrop-orbs { display: none !important; }
 body.glance-mode .glance-pill { display: flex !important; }
 body.glance-mode .glass-surface { display: none !important; }
+
+/* Time Perspective & Life Progress */
+.perspective-card {
+  background: rgba(43, 35, 64, 0.03); border-radius: 14px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.perspective-title-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: var(--ink); }
+.perspective-bar-bg { width: 100%; height: 7px; background: rgba(43, 35, 64, 0.08); border-radius: var(--radius-pill); overflow: hidden; }
+.perspective-bar-fill { height: 100%; border-radius: var(--radius-pill); transition: width 400ms ease; }

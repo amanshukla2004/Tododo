@@ -4,22 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tododo</title>
-
-  <!-- Google Fonts: Bricolage Grotesque & DM Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
-
-  <!-- Stylesheets -->
   <link rel="stylesheet" href="styles/tokens.css" />
   <link rel="stylesheet" href="styles/glass.css" />
   <link rel="stylesheet" href="styles/components.css" />
   <link rel="stylesheet" href="styles/sheets.css" />
 </head>
 <body>
-  <!-- Clipped Rounded Container -->
   <div class="widget-container">
-    <!-- 5 Blurred Pastel Circles Behind Glass -->
     <div class="backdrop-orbs" aria-hidden="true">
       <div class="orb orb-peach"></div>
       <div class="orb orb-lilac"></div>
@@ -28,160 +22,171 @@
       <div class="orb orb-sky"></div>
     </div>
 
-    <!-- Glance Pill / Capsule (Draggable, compact, transparent glass) -->
+    <!-- Glance Pill Capsule (Draggable, compact, transparent) -->
     <div id="glance-pill" class="glance-pill" role="region" aria-label="Glance capsule" data-tauri-drag-region>
-      <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1; pointer-events: none;" data-tauri-drag-region>
-        <svg width="24" height="24" viewBox="0 0 34 34" style="flex-shrink: 0;" data-tauri-drag-region>
+      <div style="display:flex; align-items:center; gap:8px; overflow:hidden; flex:1; pointer-events:none;" data-tauri-drag-region>
+        <svg width="24" height="24" viewBox="0 0 34 34" style="flex-shrink:0;" data-tauri-drag-region>
           <circle cx="17" cy="17" r="14" stroke="rgba(43,35,64,0.12)" stroke-width="3.5" fill="none"></circle>
           <circle id="glance-progress-circle" cx="17" cy="17" r="14" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round" fill="none" stroke-dasharray="87.96" stroke-dashoffset="20"></circle>
         </svg>
-        <div style="display: flex; flex-direction: column; overflow: hidden; pointer-events: none;" data-tauri-drag-region>
-          <span id="glance-task-title" style="font-size: 11.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" data-tauri-drag-region>Next Task</span>
-          <span id="glance-task-meta" style="font-size: 9.5px; color: var(--muted);" data-tauri-drag-region>3 left</span>
+        <div style="display:flex; flex-direction:column; overflow:hidden; pointer-events:none;" data-tauri-drag-region>
+          <span id="glance-task-title" style="font-size:11.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" data-tauri-drag-region>Next Task</span>
+          <span id="glance-task-meta" style="font-size:9.5px; color:var(--muted);" data-tauri-drag-region>3 left</span>
         </div>
       </div>
-      <button id="btn-expand-glance" class="btn-add-submit" style="position: static; width: 28px; height: 28px; min-width: 28px;" aria-label="Expand widget" title="Expand">
+      <button id="btn-expand-glance" class="btn-add-submit" style="position:static; width:28px; height:28px; min-width:28px;" aria-label="Expand" title="Expand">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
       </button>
     </div>
 
     <!-- Glass Surface Main View -->
     <div class="glass glass-surface">
-      <!-- Header -->
       <header class="widget-header header-drag" data-tauri-drag-region>
         <div class="header-titles" data-tauri-drag-region>
           <span class="header-greeting" id="header-greeting" data-tauri-drag-region>Good evening</span>
+          <button id="btn-day-progress" class="day-progress-badge" aria-label="Time perspective">⏳ 4h left (82%)</button>
           <h1 class="header-title" data-tauri-drag-region>Today</h1>
         </div>
         <div class="header-actions">
-          <button id="btn-open-guide" class="icon-btn" aria-label="Smart input guide" title="Smart Input Guide (💡)">💡</button>
-          <button id="btn-collapse-glance" class="icon-btn" aria-label="Minimize to capsule" title="Capsule view">
+          <button id="btn-open-focus-header" class="icon-btn" aria-label="Focus mode" title="Focus Mode (⏱️)">⏱️</button>
+          <button id="btn-open-guide" class="icon-btn" aria-label="Guide" title="Smart Input Guide (💡)">💡</button>
+          <button id="btn-collapse-glance" class="icon-btn" aria-label="Capsule" title="Capsule view">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="12" x2="20" y2="12"></line></svg>
           </button>
-          <button id="btn-toggle-search" class="icon-btn" aria-label="Search tasks" title="Search (Ctrl+F)">
+          <button id="btn-toggle-search" class="icon-btn" aria-label="Search" title="Search (Ctrl+F)">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </button>
-          <button id="btn-open-settings" class="icon-btn" aria-label="Open settings" title="Settings">
+          <button id="btn-open-settings" class="icon-btn" aria-label="Settings" title="Settings">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           </button>
-          <button id="btn-close-widget" class="icon-btn btn-close-header" aria-label="Close or Exit" title="Close / Exit">
+          <button id="btn-close-widget" class="icon-btn btn-close-header" aria-label="Close" title="Close">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
       </header>
 
-      <!-- Search Bar -->
       <div id="search-container" class="search-container">
-        <input type="text" id="search-input" class="search-input" placeholder="Search tasks... (Ctrl+F)" aria-label="Search query" />
-        <button id="btn-close-search" class="icon-btn" style="width: 28px; height: 28px;" aria-label="Close search">✕</button>
+        <input type="text" id="search-input" class="search-input" placeholder="Search tasks... (Ctrl+F)" aria-label="Search" />
+        <button id="btn-close-search" class="icon-btn" style="width:28px; height:28px;" aria-label="Close">✕</button>
       </div>
 
-      <!-- Up Next Hero Card in Peach #FFD9CC -->
       <div id="hero-card" class="hero-card"></div>
 
-      <!-- Persistent Mini Focus Bar on Main Menu -->
+      <!-- Mini Focus Bar -->
       <div id="mini-focus-bar" class="mini-focus-bar">
-        <div id="mini-focus-left" class="mini-focus-left" title="Click to open Focus Sheet">
+        <div id="mini-focus-left" class="mini-focus-left" title="Open Focus">
           <span id="mini-focus-icon">⚡</span>
           <span id="mini-focus-time" class="mini-focus-time">25:00</span>
           <span id="mini-focus-title" class="mini-focus-title">Focus Session</span>
         </div>
         <div class="mini-focus-actions">
-          <button id="mini-focus-sub5" class="mini-focus-btn" aria-label="Subtract 5 minutes" title="-5 min">-5m</button>
-          <button id="mini-focus-add5" class="mini-focus-btn" aria-label="Add 5 minutes" title="+5 min">+5m</button>
-          <button id="mini-focus-toggle" class="mini-focus-btn" style="background: var(--ink); color: #fff;" aria-label="Toggle timer">Pause</button>
+          <button id="mini-focus-sub5" class="mini-focus-btn" title="-5 min">-5m</button>
+          <button id="mini-focus-add5" class="mini-focus-btn" title="+5 min">+5m</button>
+          <button id="mini-focus-toggle" class="mini-focus-btn" style="background:var(--ink); color:#fff;">Pause</button>
         </div>
       </div>
 
-      <!-- Filter Chips -->
       <div id="filter-row" class="filter-row"></div>
-
-      <!-- Task Tiles List -->
+      <div id="list-filter-row" class="list-filter-row"></div>
       <main id="task-list-container" class="task-list-container" role="list"></main>
 
-      <!-- Bottom Add Task Bar -->
+      <!-- Bottom Add Task Bar & Interactive Drawer -->
       <footer class="bottom-bar">
+        <div id="add-task-drawer" class="add-task-drawer" style="display:none;">
+          <div class="drawer-row">
+            <span class="drawer-label">Priority:</span>
+            <button class="drawer-opt-btn active" data-type="prio" data-val="0">None</button>
+            <button class="drawer-opt-btn" data-type="prio" data-val="1">Low</button>
+            <button class="drawer-opt-btn" data-type="prio" data-val="2">Med</button>
+            <button class="drawer-opt-btn" data-type="prio" data-val="3">High</button>
+          </div>
+          <div class="drawer-row" id="drawer-lists-row">
+            <span class="drawer-label">List:</span>
+            <button class="drawer-opt-btn active" data-type="list" data-val="none">Inbox</button>
+          </div>
+          <div class="drawer-row">
+            <span class="drawer-label">Due:</span>
+            <button class="drawer-opt-btn active" data-type="due" data-val="none">None</button>
+            <button class="drawer-opt-btn" data-type="due" data-val="today">Today</button>
+            <button class="drawer-opt-btn" data-type="due" data-val="tomorrow">Tomorrow</button>
+          </div>
+          <div class="drawer-row">
+            <span class="drawer-label">Repeat:</span>
+            <button class="drawer-opt-btn active" data-type="rep" data-val="none">None</button>
+            <button class="drawer-opt-btn" data-type="rep" data-val="daily">Daily</button>
+            <button class="drawer-opt-btn" data-type="rep" data-val="weekly">Weekly</button>
+          </div>
+          <input type="text" id="drawer-notes-input" class="drawer-notes-input" placeholder="Add description / notes..." />
+        </div>
         <div class="add-input-wrapper">
-          <input type="text" id="add-task-input" class="add-input" placeholder="Add a task, try tomorrow 5pm !high" aria-label="Add new task" />
-          <button id="btn-add-task" class="btn-add-submit" aria-label="Submit task" title="Add task">
+          <input type="text" id="add-task-input" class="add-input" placeholder="Add a task, try tomorrow 5pm !high" aria-label="Add task" />
+          <button id="btn-toggle-drawer" class="btn-toggle-drawer" aria-label="Options" title="Task Options">⚙️</button>
+          <button id="btn-add-task" class="btn-add-submit" aria-label="Submit" title="Add task">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </button>
         </div>
         <div id="live-chips-preview" class="live-chips-preview" aria-live="polite"></div>
       </footer>
 
-      <!-- Task Inspector Sheet (Stage 2) -->
+      <!-- Task Inspector Sheet -->
       <aside id="task-sheet" class="sheet" aria-label="Task details">
         <div class="sheet-header">
-          <button id="sheet-btn-back" class="icon-btn" aria-label="Back to tasks" title="Back (Esc)">
+          <button id="sheet-btn-back" class="icon-btn" aria-label="Back" title="Back">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           </button>
           <span class="sheet-heading">Task Details</span>
-          <button id="sheet-btn-pin" class="btn-pin" aria-label="Pin task" title="Pin to top">
+          <button id="sheet-btn-pin" class="btn-pin" aria-label="Pin" title="Pin">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 4v4l2 2v2h-7v7l-1 1-1-1v-7H2v-2l2-2V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"></path></svg>
           </button>
         </div>
         <div class="sheet-body">
-          <input type="text" id="sheet-task-title" class="task-edit-title" placeholder="Task title..." aria-label="Task title" />
-          <textarea id="sheet-task-notes" class="task-edit-notes" placeholder="Add notes or details..." aria-label="Task notes"></textarea>
+          <input type="text" id="sheet-task-title" class="task-edit-title" placeholder="Task title..." />
+          <textarea id="sheet-task-notes" class="task-edit-notes" placeholder="Add notes or details..."></textarea>
           <div class="property-grid">
-            <div id="prop-tile-due" class="prop-tile prop-tile-due" role="button" tabindex="0">
-              <span class="prop-label">Due</span><span id="prop-val-due" class="prop-value">None</span>
-            </div>
-            <div id="prop-tile-priority" class="prop-tile prop-tile-priority" role="button" tabindex="0">
-              <span class="prop-label">Priority</span><span id="prop-val-priority" class="prop-value">None</span>
-            </div>
-            <div id="prop-tile-list" class="prop-tile prop-tile-list" role="button" tabindex="0">
-              <span class="prop-label">List</span><span id="prop-val-list" class="prop-value">Inbox</span>
-            </div>
-            <div id="prop-tile-repeat" class="prop-tile prop-tile-repeat" role="button" tabindex="0">
-              <span class="prop-label">Repeat</span><span id="prop-val-repeat" class="prop-value">None</span>
-            </div>
+            <div id="prop-tile-due" class="prop-tile prop-tile-due" role="button" tabindex="0"><span class="prop-label">Due</span><span id="prop-val-due" class="prop-value">None</span></div>
+            <div id="prop-tile-priority" class="prop-tile prop-tile-priority" role="button" tabindex="0"><span class="prop-label">Priority</span><span id="prop-val-priority" class="prop-value">None</span></div>
+            <div id="prop-tile-list" class="prop-tile prop-tile-list" role="button" tabindex="0"><span class="prop-label">List</span><span id="prop-val-list" class="prop-value">Inbox</span></div>
+            <div id="prop-tile-repeat" class="prop-tile prop-tile-repeat" role="button" tabindex="0"><span class="prop-label">Repeat</span><span id="prop-val-repeat" class="prop-value">None</span></div>
           </div>
           <div class="steps-section">
             <div class="steps-header"><span>Steps</span><span id="sheet-steps-count">0/0</span></div>
             <div id="sheet-steps-list" class="steps-list"></div>
             <div class="step-add-row">
-              <input type="text" id="input-step-title" class="step-add-input" placeholder="Add a step..." aria-label="New step title" />
-              <button id="btn-add-step" class="btn-start-focus" style="padding: 6px 12px;" aria-label="Add step">Add</button>
+              <input type="text" id="input-step-title" class="step-add-input" placeholder="Add a step..." />
+              <button id="btn-add-step" class="btn-start-focus" style="padding:6px 12px;">Add</button>
             </div>
           </div>
         </div>
         <div class="sheet-footer">
           <div class="snooze-chips">
-            <button class="chip-snooze" data-mins="10" aria-label="Snooze 10m">+10m</button>
-            <button class="chip-snooze" data-mins="60" aria-label="Snooze 1h">+1h</button>
-            <button class="chip-snooze" data-mins="1440" aria-label="Snooze tomorrow">Tomorrow</button>
+            <button class="chip-snooze" data-mins="10">+10m</button>
+            <button class="chip-snooze" data-mins="60">+1h</button>
+            <button class="chip-snooze" data-mins="1440">Tomorrow</button>
           </div>
-          <button id="sheet-btn-delete" class="btn-task-delete" aria-label="Delete task">Delete</button>
+          <button id="sheet-btn-delete" class="btn-task-delete">Delete</button>
         </div>
-
-        <!-- Property Options Picker Modal -->
-        <div id="prop-picker-overlay" class="prop-picker-overlay" style="display: none;">
+        <div id="prop-picker-overlay" class="prop-picker-overlay" style="display:none;">
           <div class="prop-picker-modal">
-            <div class="picker-header">
-              <span id="picker-title" class="picker-title">Select Option</span>
-              <button id="btn-close-picker" class="icon-btn" style="width: 28px; height: 28px;" aria-label="Close picker">✕</button>
-            </div>
+            <div class="picker-header"><span id="picker-title" class="picker-title">Select Option</span><button id="btn-close-picker" class="icon-btn" style="width:28px; height:28px;">✕</button></div>
             <div id="picker-options-container" class="picker-options"></div>
           </div>
         </div>
       </aside>
 
-      <!-- Focus Pomodoro Sheet (Stage 3) -->
+      <!-- Focus Sheet -->
       <aside id="focus-sheet" class="sheet" aria-label="Focus session">
         <div class="sheet-header">
-          <button id="focus-btn-back" class="icon-btn" aria-label="Back to tasks" title="Back (Esc)">
+          <button id="focus-btn-back" class="icon-btn" aria-label="Back">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           </button>
-          <span class="sheet-heading">Focus</span>
-          <div style="width: 40px;"></div>
+          <span class="sheet-heading">Focus Mode</span>
+          <div style="width:40px;"></div>
         </div>
         <div class="sheet-body focus-body">
           <div class="focus-modes-row">
-            <button class="chip-focus-mode active" data-mins="25" aria-label="Focus 25 minutes">Focus 25</button>
-            <button class="chip-focus-mode" data-mins="5" aria-label="Short break 5 minutes">Short 5</button>
-            <button class="chip-focus-mode" data-mins="15" aria-label="Long break 15 minutes">Long 15</button>
+            <button class="chip-focus-mode active" data-mins="25">Focus 25</button>
+            <button class="chip-focus-mode" data-mins="5">Short 5</button>
+            <button class="chip-focus-mode" data-mins="15">Long 15</button>
           </div>
           <div class="focus-ring-container">
             <svg class="focus-svg" width="200" height="200" viewBox="0 0 200 200">
@@ -194,22 +199,22 @@
             </div>
           </div>
           <div class="focus-controls-row">
-            <button id="focus-btn-reset" class="btn-focus-sec" aria-label="Reset timer">Reset</button>
-            <button id="focus-btn-toggle" class="btn-focus-primary" aria-label="Start or pause timer">Start</button>
-            <button id="focus-btn-skip" class="btn-focus-sec" aria-label="Skip session">Skip</button>
+            <button id="focus-btn-reset" class="btn-focus-sec">Reset</button>
+            <button id="focus-btn-toggle" class="btn-focus-primary">Start</button>
+            <button id="focus-btn-skip" class="btn-focus-sec">Skip</button>
           </div>
           <span id="focus-session-meta" class="focus-meta">Session 1 of 4 · 0 min total</span>
         </div>
       </aside>
 
-      <!-- Settings Sheet (Stage 3 + Capsule Customization) -->
+      <!-- Settings Sheet -->
       <aside id="settings-sheet" class="sheet" aria-label="Settings">
         <div class="sheet-header">
-          <button id="settings-btn-back" class="icon-btn" aria-label="Back to tasks" title="Back (Esc)">
+          <button id="settings-btn-back" class="icon-btn" aria-label="Back">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           </button>
           <span class="sheet-heading">Settings</span>
-          <div style="width: 40px;"></div>
+          <div style="width:40px;"></div>
         </div>
         <div class="sheet-body">
           <div class="settings-section">
@@ -218,82 +223,69 @@
           </div>
           <div class="settings-section">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span class="settings-label">Glass Frost</span>
+              <span class="settings-label">Widget Glass Opacity</span>
+              <span id="widget-opacity-label" class="slider-value">58%</span>
+            </div>
+            <div class="slider-row"><input type="range" id="widget-opacity-slider" class="slider-input" min="20" max="95" value="58" /></div>
+          </div>
+          <div class="settings-section">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="settings-label">Glass Frost Texture</span>
               <span id="frost-value-label" class="slider-value">58%</span>
             </div>
-            <div class="slider-row">
-              <input type="range" id="frost-slider" class="slider-input" min="40" max="90" value="58" aria-label="Glass frost fill opacity" />
-            </div>
+            <div class="slider-row"><input type="range" id="frost-slider" class="slider-input" min="40" max="90" value="58" /></div>
           </div>
           <div class="settings-section">
             <span class="settings-label">Capsule Pill Mode</span>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span class="toggle-sub">Capsule Size</span>
-              <span id="capsule-size-label" class="slider-value">220px</span>
-            </div>
-            <div class="slider-row">
-              <input type="range" id="capsule-size-slider" class="slider-input" min="160" max="340" value="220" aria-label="Capsule width" />
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 4px;">
-              <span class="toggle-sub">Capsule Glass Opacity</span>
-              <span id="capsule-opacity-label" class="slider-value">45%</span>
-            </div>
-            <div class="slider-row">
-              <input type="range" id="capsule-opacity-slider" class="slider-input" min="15" max="85" value="45" aria-label="Capsule opacity" />
-            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span class="toggle-sub">Size</span><span id="capsule-size-label" class="slider-value">220px</span></div>
+            <div class="slider-row"><input type="range" id="capsule-size-slider" class="slider-input" min="160" max="340" value="220" /></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;"><span class="toggle-sub">Glass Opacity</span><span id="capsule-opacity-label" class="slider-value">45%</span></div>
+            <div class="slider-row"><input type="range" id="capsule-opacity-slider" class="slider-input" min="15" max="85" value="45" /></div>
           </div>
           <div class="settings-section">
             <span class="settings-label">Preferences</span>
-            <label class="setting-toggle-row">
-              <div><div class="toggle-title">Sounds</div><div class="toggle-sub">Soft chimes on timer & completions</div></div>
-              <input type="checkbox" id="switch-sounds" class="switch-input" aria-label="Enable sound effects" />
-            </label>
-            <label class="setting-toggle-row">
-              <div><div class="toggle-title">Stay on Top</div><div class="toggle-sub">Float window above other apps</div></div>
-              <input type="checkbox" id="switch-stay-on-top" class="switch-input" aria-label="Pin widget always on top" />
-            </label>
-            <label class="setting-toggle-row">
-              <div><div class="toggle-title">Calm Mode</div><div class="toggle-sub">Solid warm background without blur</div></div>
-              <input type="checkbox" id="switch-calm-mode" class="switch-input" aria-label="Enable calm mode" />
-            </label>
+            <label class="setting-toggle-row"><div><div class="toggle-title">Sounds</div><div class="toggle-sub">Chimes on timer</div></div><input type="checkbox" id="switch-sounds" class="switch-input" /></label>
+            <label class="setting-toggle-row"><div><div class="toggle-title">Stay on Top</div><div class="toggle-sub">Float window</div></div><input type="checkbox" id="switch-stay-on-top" class="switch-input" /></label>
+            <label class="setting-toggle-row"><div><div class="toggle-title">Calm Mode</div><div class="toggle-sub">Solid warm background</div></div><input type="checkbox" id="switch-calm-mode" class="switch-input" /></label>
           </div>
           <div class="settings-section">
-            <span class="settings-label">Data Backup</span>
+            <span class="settings-label">Backup</span>
             <div class="backup-actions-row">
-              <button id="btn-export-json" class="btn-settings-action" aria-label="Export backup">Export JSON</button>
-              <button id="btn-import-json" class="btn-settings-action" aria-label="Import backup">Import JSON</button>
-              <input type="file" id="input-import-file" accept=".json" style="display: none;" />
+              <button id="btn-export-json" class="btn-settings-action">Export JSON</button>
+              <button id="btn-import-json" class="btn-settings-action">Import JSON</button>
+              <input type="file" id="input-import-file" accept=".json" style="display:none;" />
             </div>
           </div>
         </div>
       </aside>
 
-      <!-- Smart Input Guide Modal Overlay -->
-      <div id="guide-modal-overlay" class="prop-picker-overlay" style="display: none;">
-        <div class="prop-picker-modal" style="max-height: 85%;">
-          <div class="picker-header">
-            <span class="picker-title">💡 Smart Input Guide</span>
-            <button id="btn-close-guide" class="icon-btn" style="width: 28px; height: 28px;" aria-label="Close guide">✕</button>
-          </div>
-          <div style="font-size: 12.5px; color: var(--ink); line-height: 1.5; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-            <div><b>⚡ Priority:</b> Type <code>!high</code>, <code>!med</code>, <code>!low</code>, or <code>!urgent</code></div>
-            <div><b>📅 Due Dates:</b> Type <code>today</code>, <code>tomorrow</code>, or a day name like <code>friday</code></div>
-            <div><b>⏰ Times:</b> Type <code>5pm</code>, <code>10:30am</code>, <code>18:00</code>, or <code>10 tomorrow</code></div>
+      <!-- Smart Input Guide Modal -->
+      <div id="guide-modal-overlay" class="prop-picker-overlay" style="display:none;">
+        <div class="prop-picker-modal" style="max-height:85%;">
+          <div class="picker-header"><span class="picker-title">💡 Smart Input Guide</span><button id="btn-close-guide" class="icon-btn" style="width:28px; height:28px;">✕</button></div>
+          <div style="font-size:12px; color:var(--ink); line-height:1.5; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
+            <div><b>⚡ Priority:</b> Type <code>!high</code>, <code>!med</code>, <code>!low</code>, <code>!urgent</code></div>
+            <div><b>📅 Dates:</b> Type <code>today</code>, <code>tomorrow</code>, <code>friday</code></div>
+            <div><b>⏰ Times:</b> Type <code>5pm</code>, <code>10am</code>, <code>10 tomorrow</code></div>
             <div><b>🏷️ Lists:</b> Type <code>#work</code>, <code>#study</code>, <code>#personal</code></div>
-            <div style="background: var(--cream-base); padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(43,35,64,0.1); margin-top: 4px;">
-              <b>Example:</b><br/>
-              <code>Wash dishes 10 tomorrow !high #personal</code><br/>
-              <span style="color: var(--muted); font-size: 11px;">→ Title: "Wash dishes"<br/>→ Due: Tomorrow, 10:00 AM<br/>→ Priority: High<br/>→ List: Personal</span>
+            <div style="background:var(--cream-base); padding:6px 8px; border-radius:10px; font-size:11px;">
+              <b>Example:</b> <code>Wash dishes 10 tomorrow !high #personal</code>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Toast Container -->
+      <!-- Life & Time Perspective Modal -->
+      <div id="time-perspective-modal" class="prop-picker-overlay" style="display:none;">
+        <div class="prop-picker-modal" style="max-height:85%;">
+          <div class="picker-header"><span class="picker-title">⏳ Life & Time Perspective</span><button id="btn-close-perspective" class="icon-btn" style="width:28px; height:28px;">✕</button></div>
+          <div id="perspective-content" style="overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+      </div>
+
       <div id="toast-container" class="toast-container" aria-live="polite"></div>
     </div>
   </div>
-
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

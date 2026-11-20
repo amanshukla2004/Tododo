@@ -56,6 +56,22 @@ export function initSettingsSheet() {
     });
   }
 
+  // Widget Glass Transparency (20 to 95 percent)
+  const widgetOpacitySlider = document.getElementById('widget-opacity-slider');
+  const widgetOpacityLabel = document.getElementById('widget-opacity-label');
+  if (widgetOpacitySlider) {
+    widgetOpacitySlider.value = Math.round((state.widgetOpacity || 0.58) * 100);
+    if (widgetOpacityLabel) widgetOpacityLabel.textContent = `${widgetOpacitySlider.value}%`;
+    widgetOpacitySlider.addEventListener('input', async (e) => {
+      const val = parseInt(e.target.value, 10);
+      const opacity = val / 100;
+      state.widgetOpacity = opacity;
+      if (widgetOpacityLabel) widgetOpacityLabel.textContent = `${val}%`;
+      applyThemeSettings();
+      await api.saveSetting('widget_opacity', opacity.toString());
+    });
+  }
+
   // Capsule Mode Customization: Size & Glass Transparency
   const capSizeSlider = document.getElementById('capsule-size-slider');
   const capSizeLabel = document.getElementById('capsule-size-label');

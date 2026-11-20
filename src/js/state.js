@@ -5,10 +5,12 @@ export const state = {
   tasks: [],
   lists: [],
   activeFilter: 'today',
+  selectedListId: 'all',
   searchQuery: '',
   activeTask: null,
   accent: '#8B74F0',
   frostOpacity: 0.58,
+  widgetOpacity: 0.58,
   capsuleWidth: 220,
   capsuleOpacity: 0.45,
   calmMode: false,
@@ -47,6 +49,7 @@ export async function initStore() {
     if (settings) {
       if (settings.accent) state.accent = settings.accent;
       if (settings.frost_opacity) state.frostOpacity = parseFloat(settings.frost_opacity) || 0.58;
+      if (settings.widget_opacity) state.widgetOpacity = parseFloat(settings.widget_opacity) || 0.58;
       if (settings.capsule_width) state.capsuleWidth = parseInt(settings.capsule_width, 10) || 220;
       if (settings.capsule_opacity) state.capsuleOpacity = parseFloat(settings.capsule_opacity) || 0.45;
       if (settings.calm_mode) state.calmMode = settings.calm_mode === 'true';
@@ -75,6 +78,11 @@ export function setFilter(filter) {
   refreshTasks();
 }
 
+export function setSelectedList(listId) {
+  state.selectedListId = listId;
+  notify();
+}
+
 export function setSearchQuery(query) {
   state.searchQuery = (query || '').toLowerCase().trim();
   notify();
@@ -83,6 +91,7 @@ export function setSearchQuery(query) {
 export function applyThemeSettings() {
   document.documentElement.style.setProperty('--accent', state.accent);
   document.documentElement.style.setProperty('--frost-opacity', state.frostOpacity);
+  document.documentElement.style.setProperty('--widget-opacity', state.widgetOpacity);
   document.documentElement.style.setProperty('--capsule-width', `${state.capsuleWidth}px`);
   document.documentElement.style.setProperty('--capsule-opacity', state.capsuleOpacity);
   if (state.calmMode) {
@@ -94,6 +103,9 @@ export function applyThemeSettings() {
 
 export function getFilteredTasks() {
   let list = [...state.tasks];
+  if (state.selectedListId !== 'all') {
+    list = list.filter(t => state.selectedListId === null ? !t.list_id : t.list_id === state.selectedListId);
+  }
   if (state.searchQuery) {
     list = list.filter(t =>
       (t.title && t.title.toLowerCase().includes(state.searchQuery)) ||
