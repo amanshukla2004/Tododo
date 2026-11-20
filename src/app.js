@@ -202,10 +202,19 @@ function setupEventListeners() {
     });
   });
 
-  // Keyboard Shortcuts: Tab toggles Glance Mode, Esc closes Drawer
+  // Keyboard Shortcuts: Tab toggles Glance Mode, Esc closes Drawer, Ctrl+Z undoes delete
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeDrawer();
+      document.getElementById("settings-modal").classList.remove("open");
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+      e.preventDefault();
+      undoDelete();
+    }
+    if (e.key === "Tab" && !e.target.matches("input, textarea")) {
+      e.preventDefault();
+      toggleGlanceMode();
     }
   });
 }
@@ -282,6 +291,44 @@ function createTaskRow(task) {
   const row = document.createElement("div");
   row.className = `task-row ${task.done ? "completed" : ""}`;
   row.dataset.id = task.id;
+  row.draggable = !task.done; // Uncompleted tasks are draggable
+
+  // Drag and Drop Event Listeners
+  row.addEventListener("dragstart", (e) => {
+    row.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", task.id);
+  });
+
+  row.addEventListener("dragend", () => {
+    row.classList.remove("dragging");
+  });
+
+  row.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  });
+
+  row.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    const draggedId = e.dataTransfer.getData("text/plain");
+    const targetId = task.id;
+    if (!draggedId || draggedId === targetId) return;
+
+    const uncompleted = state.tasks.filter((t) => !t.done);
+    const fromIdx = uncompleted.findIndex((t) => t.id === draggedId);
+    const toIdx = uncompleted.findIndex((t) => t.id === targetId);
+
+    if (fromIdx !== -1 && toIdx !== -1) {
+      const [moved] = uncompleted.splice(fromIdx, 1);
+      uncompleted.splice(toIdx, 0, moved);
+      const reorderedIds = uncompleted.map((t) => t.id);
+
+      await tauri.invoke("reorder_tasks", { taskIds: reorderedIds });
+      playPopSound();
+      await loadTasks();
+    }
+  });
 
   // Checkbox Box
   const checkbox = document.createElement("div");
@@ -349,24 +396,35 @@ function createTaskRow(task) {
   info.appendChild(title);
   if (meta.children.length > 0) info.appendChild(meta);
 
-  // Pin indicator
-  if (task.pinned) {
-    const pin = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    pin.setAttribute("class", "pin-icon");
-    pin.setAttribute("width", "12");
-    pin.setAttribute("height", "12");
-    pin.setAttribute("viewBox", "0 0 24 24");
-    pin.setAttribute("fill", "currentColor");
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("d", "M5 17h14v-2l-2-3V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v6l-2 3v2z");
-    pin.appendChild(path);
-    row.appendChild(checkbox);
-    row.appendChild(info);
-    row.appendChild(pin);
-  } else {
-    row.appendChild(checkbox);
-    row.appendChild(info);
-  }
+  // Pin icon toggle button
+  const pinBtn = document.createElement("button");
+  pinBtn.className = `icon-btn pin-btn ${task.pinned ? "pinned" : ""}`;
+  pinBtn.title = task.pinned ? "Unpin task" : "Pin to top";
+  pinBtn.setAttribute("aria-label", "Toggle pin");
+
+  const pinSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  pinSvg.setAttribute("class", "pin-icon");
+  pinSvg.setAttribute("width", "12");
+  pinSvg.setAttribute("height", "12");
+  pinSvg.setAttribute("viewBox", "0 0 24 24");
+  pinSvg.setAttribute("fill", task.pinned ? "currentColor" : "none");
+  pinSvg.setAttribute("stroke", "currentColor");
+  pinSvg.setAttribute("stroke-width", "2");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M5 17h14v-2l-2-3V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v6l-2 3v2z");
+  pinSvg.appendChild(path);
+  pinBtn.appendChild(pinSvg);
+
+  pinBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    await tauri.invoke("update_task", { id: task.id, pinned: !task.pinned });
+    playPopSound();
+    await loadTasks();
+  });
+
+  row.appendChild(checkbox);
+  row.appendChild(info);
+  row.appendChild(pinBtn);
 
   // Open Drawer on Row Click
   row.addEventListener("click", () => {
