@@ -1,0 +1,131 @@
+/* Glass Container & Pastel Backdrop Orbs */
+html, body {
+  margin: 0;
+  padding: 6px;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent !important;
+  font-family: var(--font-body);
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+  box-sizing: border-box;
+}
+
+body.glance-mode {
+  padding: 2px !important;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+/* Rounded clipped widget window container */
+.widget-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-widget);
+  overflow: hidden;
+  box-shadow: var(--shadow-widget);
+  background: var(--cream-base);
+}
+
+/* 5 Blurred pastel circles behind the glass layer */
+.backdrop-orbs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  filter: blur(40px);
+  will-change: transform;
+}
+
+.orb-peach {
+  background: var(--pastel-peach);
+  top: -60px;
+  left: -50px;
+  opacity: 0.85;
+}
+
+.orb-lilac {
+  background: var(--pastel-lilac);
+  top: 90px;
+  right: -70px;
+  opacity: 0.8;
+}
+
+.orb-mint {
+  background: var(--pastel-mint);
+  bottom: 80px;
+  left: -40px;
+  opacity: 0.85;
+}
+
+.orb-butter {
+  background: var(--pastel-butter);
+  top: 170px;
+  left: 60px;
+  opacity: 0.75;
+}
+
+.orb-sky {
+  background: var(--pastel-sky);
+  bottom: -70px;
+  right: -50px;
+  opacity: 0.85;
+}
+
+/* Premium Warm Glass Surface */
+.glass {
+  background: rgba(255, 255, 255, var(--frost-opacity, 0.58));
+  backdrop-filter: blur(28px) saturate(1.7);
+  -webkit-backdrop-filter: blur(28px) saturate(1.7);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 1px 0 #ffffff;
+  border-radius: var(--radius-widget);
+}
+
+.glass-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Calm Mode Override: disables blur and orbs, uses solid #FFF8F2 */
+body.calm-mode .widget-container {
+  background: #FFF8F2;
+}
+
+body.calm-mode .backdrop-orbs {
+  display: none !important;
+}
+
+body.calm-mode .glass {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: #FFF8F2 !important;
+  border: 1px solid rgba(43, 35, 64, 0.1) !important;
+  box-shadow: 0 12px 32px rgba(43, 35, 64, 0.08) !important;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

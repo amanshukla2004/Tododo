@@ -1,0 +1,61 @@
+:root {
+  /* Core Base & Ink */
+  --ink: #2B2340;
+  --muted: #5E5675;
+  --cream-base: #FFF3E8;
+  --white: #FFFFFF;
+  --danger: #B3361F;
+
+  /* Pastels */
+  --pastel-peach: #FFC9B5;
+  --pastel-peach-hero: #FFD9CC;
+  --pastel-lilac: #D4C4FF;
+  --pastel-mint: #BDEBD6;
+  --pastel-butter: #FFE08A;
+  --pastel-sky: #BFE3FF;
+
+  /* List Colors & Accents */
+  --list-study: #8B74F0;
+  --list-work: #3D97DB;
+  --list-personal: #E96A4D;
+  --list-done: #1FA77B;
+
+  /* Active Accent (drives progress rings & focus ring, default to study) */
+  --accent: #8B74F0;
+
+  /* Tag Pill Backgrounds & Texts */
+  --pill-study-bg: #E9E2FF;
+  --pill-study-text: #4B3A9A;
+  --pill-work-bg: #DDF0FF;
+  --pill-work-text: #1D5E8F;
+  --pill-personal-bg: #FFE3DA;
+  --pill-personal-text: #9A3E27;
+  --pill-high-bg: #FFE9A8;
+  --pill-high-text: #6B4A00;
+  --pill-med-bg: #FFE8D6;
+  --pill-med-text: #8C4F1C;
+  --pill-low-bg: #E2F5EA;
+  --pill-low-text: #1A633F;
+
+  /* Typography */
+  --font-heading: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+
+  /* Radii */
+  --radius-widget: 28px;
+  --radius-tile: 18px;
+  --radius-pill: 9999px;
+  --radius-round: 50%;
+
+  /* Glass Fill Opacity (Range 0.40 - 0.90) */
+  --frost-opacity: 0.58;
+
+  /* Shadows */
+  --shadow-widget: inset 0 1px 0 #ffffff, 0 24px 48px rgba(120, 90, 180, 0.22);
+  --shadow-tile: 0 4px 14px rgba(43, 35, 64, 0.05);
+  --shadow-tile-hover: 0 6px 18px rgba(43, 35, 64, 0.09);
+  --shadow-button: 0 4px 12px rgba(43, 35, 64, 0.14);
+
+  /* Easing */
+  --ease-sheet: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

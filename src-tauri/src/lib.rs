@@ -95,6 +95,9 @@ pub fn run() {
             commands::export_data,
             commands::import_data,
             commands::set_window_mode,
+            commands::resize_window,
+            commands::minimize_window,
+            commands::close_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while building tauri application");

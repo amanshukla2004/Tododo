@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tododo Reminder</title>
+  <link rel="stylesheet" href="styles/tokens.css" />
+  <link rel="stylesheet" href="styles/glass.css" />
+  <style>
+    body {
+      margin: 0; padding: 8px; width: 100vw; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent; font-family: var(--font-body);
+    }
+    .banner-card {
+      width: 100%; height: 100%; border-radius: 20px;
+      padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      box-shadow: 0 16px 36px rgba(120, 90, 180, 0.22);
+    }
+    .banner-left { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+    .bell-icon-box {
+      width: 38px; height: 38px; min-width: 38px; border-radius: 50%;
+      background: var(--pastel-peach); display: grid; place-content: center; font-size: 18px;
+    }
+    .banner-text { display: flex; flex-direction: column; overflow: hidden; }
+    .banner-title {
+      font-family: var(--font-heading); font-size: 14px; font-weight: 700; color: var(--ink);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;
+    }
+    .banner-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .banner-actions { display: flex; align-items: center; gap: 6px; }
+    .btn-banner-done {
+      padding: 6px 14px; background: var(--ink); color: #ffffff; border-radius: 9999px;
+      font-size: 12px; font-weight: 600; border: none; cursor: pointer;
+    }
+    .btn-banner-snooze {
+      padding: 6px 12px; background: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.9);
+      border-radius: 9999px; font-size: 11.5px; font-weight: 600; color: var(--muted); cursor: pointer;
+    }
+    .btn-banner-snooze:hover { background: rgba(255,255,255,0.95); color: var(--ink); }
+  </style>
+</head>
+<body>
+  <div class="glass banner-card" data-tauri-drag-region>
+    <div class="banner-left" data-tauri-drag-region>
+      <div class="bell-icon-box" aria-hidden="true">🔔</div>
+      <div class="banner-text" data-tauri-drag-region>
+        <h3 id="banner-title" class="banner-title">Team review session</h3>
+        <span id="banner-due" class="banner-meta">Due in 10 minutes</span>
+      </div>
+    </div>
+    <div class="banner-actions">
+      <button id="banner-btn-done" class="btn-banner-done" aria-label="Mark completed">Done</button>
+      <button id="banner-btn-snooze" class="btn-banner-snooze" aria-label="Snooze 10 minutes">Snooze 10m</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { api } from './js/api.js';
+    const params = new URLSearchParams(window.location.search);
+    const taskId = params.get('id');
+    const taskTitle = params.get('title') || 'Upcoming Task';
+
+    document.getElementById('banner-title').textContent = taskTitle;
+
+    document.getElementById('banner-btn-done').addEventListener('click', async () => {
+      if (taskId) await api.toggleTask(taskId);
+      window.close();
+    });
+
+    document.getElementById('banner-btn-snooze').addEventListener('click', async () => {
+      if (taskId) await api.snoozeTask(taskId, 10);
+      window.close();
+    });
+  </script>
+</body>
+</html>

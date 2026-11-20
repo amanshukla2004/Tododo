@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tododo Glance</title>
+  <link rel="stylesheet" href="styles/tokens.css" />
+  <link rel="stylesheet" href="styles/glass.css" />
+  <link rel="stylesheet" href="styles/sheets.css" />
+  <style>
+    body {
+      margin: 0; padding: 0; width: 100vw; height: 100vh;
+      background: transparent; display: flex; align-items: center; justify-content: center;
+    }
+    .widget-mini-pill {
+      width: 350px; height: 52px; display: flex !important;
+      position: static !important; inset: auto !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="glance-pill" class="glance-pill widget-mini-pill" data-tauri-drag-region>
+    <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;" data-tauri-drag-region>
+      <svg width="34" height="34" viewBox="0 0 34 34">
+        <circle cx="17" cy="17" r="14" stroke="rgba(43,35,64,0.1)" stroke-width="3" fill="none"></circle>
+        <circle id="glance-progress-circle" cx="17" cy="17" r="14" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" fill="none" stroke-dasharray="87.96" stroke-dashoffset="24"></circle>
+      </svg>
+      <div style="display: flex; flex-direction: column; overflow: hidden;" data-tauri-drag-region>
+        <span id="glance-task-title" style="font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Up next</span>
+        <span id="glance-task-meta" style="font-size: 10.5px; color: var(--muted);">in 2h · 3 left</span>
+      </div>
+    </div>
+    <button id="btn-open-main" class="btn-add-submit" style="position: static;" aria-label="Open main widget" title="Open Tododo">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+    </button>
+  </div>
+  <script type="module">
+    import { api } from './js/api.js';
+    async function updateGlance() {
+      const tasks = await api.getTasks('today') || [];
+      const pending = tasks.filter(t => !t.done);
+      const done = tasks.filter(t => t.done);
+      const next = pending[0];
+      if (next) {
+        document.getElementById('glance-task-title').textContent = next.title;
+        document.getElementById('glance-task-meta').textContent = `${pending.length} left today`;
+      } else {
+        document.getElementById('glance-task-title').textContent = 'All clear';
+        document.getElementById('glance-task-meta').textContent = `${done.length} completed`;
+      }
+    }
+    updateGlance();
+    document.getElementById('btn-open-main').addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

@@ -519,6 +519,25 @@ pub fn set_window_mode(window: tauri::WebviewWindow, mode: String) -> Result<(),
     Ok(())
 }
 
+/// Dynamically resize the Tauri window (e.g. 350x460 for full widget vs 350x64 for glance pill)
+#[tauri::command]
+pub fn resize_window(window: tauri::WebviewWindow, width: f64, height: f64) -> Result<(), String> {
+    window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }))
+        .map_err(|e| e.to_string())
+}
+
+/// Minimize the window to taskbar
+#[tauri::command]
+pub fn minimize_window(window: tauri::WebviewWindow) -> Result<(), String> {
+    window.minimize().map_err(|e| e.to_string())
+}
+
+/// Hide the window (close to tray)
+#[tauri::command]
+pub fn close_window(window: tauri::WebviewWindow) -> Result<(), String> {
+    window.hide().map_err(|e| e.to_string())
+}
+
 fn chrono_now_iso() -> String {
     // Generates ISO timestamp string (UTC)
     let now = std::time::SystemTime::now();
