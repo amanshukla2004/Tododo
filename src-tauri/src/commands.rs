@@ -1,4 +1,4 @@
-use crate::models::{ExportPayload, List, Subtask, Task};
+use crate::models::{ExportPayload, List, PomodoroSession, Subtask, Task};
 use rusqlite::{params, Connection};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -188,6 +188,8 @@ pub fn update_task(
     due_at: Option<String>,
     list_id: Option<String>,
     pinned: Option<bool>,
+    repeat_rule: Option<String>,
+    reminder_offset_min: Option<i64>,
 ) -> Result<(), String> {
     let conn = state.lock().map_err(|e| e.to_string())?;
 
@@ -216,6 +218,14 @@ pub fn update_task(
     if let Some(pin) = pinned {
         let p_int = if pin { 1 } else { 0 };
         conn.execute("UPDATE tasks SET pinned = ? WHERE id = ?", params![p_int, id])
+            .map_err(|e| e.to_string())?;
+    }
+    if let Some(r) = repeat_rule {
+        conn.execute("UPDATE tasks SET repeat_rule = ? WHERE id = ?", params![r, id])
+            .map_err(|e| e.to_string())?;
+    }
+    if let Some(off) = reminder_offset_min {
+        conn.execute("UPDATE tasks SET reminder_offset_min = ? WHERE id = ?", params![off, id])
             .map_err(|e| e.to_string())?;
     }
 
@@ -282,6 +292,78 @@ pub fn get_lists(state: DbState) -> Result<Vec<List>, String> {
         lists.push(row.map_err(|e| e.to_string())?);
     }
     Ok(lists)
+}
+
+/// Create a new list
+#[tauri::command]
+pub fn add_list(state: DbState, name: String, color: Option<String>) -> Result<List, String> {
+    let conn = state.lock().map_err(|e| e.to_string())?;
+    let id = format!("list_{}", std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis());
+    let clr = color.unwrap_or_else(|| "#6366f1".to_string());
+
+    conn.execute(
+        "INSERT INTO lists (id, name, color) VALUES (?, ?, ?)",
+        params![id, name.trim(), clr],
+    ).map_err(|e| e.to_string())?;
+
+    Ok(List {
+        id,
+        name: name.trim().to_string(),
+        color: clr,
+        created_at: chrono_now_iso(),
+        task_count: Some(0),
+    })
+}
+
+/// Delete a custom list
+#[tauri::command]
+pub fn delete_list(state: DbState, id: String) -> Result<(), String> {
+    let conn = state.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM lists WHERE id = ?", params![id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Log a completed Pomodoro focus session
+#[tauri::command]
+pub fn log_pomodoro_session(state: DbState, task_id: Option<String>, minutes: i64) -> Result<PomodoroSession, String> {
+    let conn = state.lock().map_err(|e| e.to_string())?;
+    let id = format!("pomo_{}", std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis());
+
+    conn.execute(
+        "INSERT INTO pomodoro_sessions (id, task_id, minutes) VALUES (?, ?, ?)",
+        params![id, task_id, minutes],
+    ).map_err(|e| e.to_string())?;
+
+    Ok(PomodoroSession {
+        id,
+        task_id,
+        started_at: chrono_now_iso(),
+        minutes,
+    })
+}
+
+/// Get aggregate Pomodoro statistics
+#[tauri::command]
+pub fn get_pomodoro_stats(state: DbState) -> Result<serde_json::Value, String> {
+    let conn = state.lock().map_err(|e| e.to_string())?;
+    let total_sessions: i64 = conn
+        .query_row("SELECT COUNT(*) FROM pomodoro_sessions", [], |r| r.get(0))
+        .unwrap_or(0);
+    let total_minutes: i64 = conn
+        .query_row("SELECT COALESCE(SUM(minutes), 0) FROM pomodoro_sessions", [], |r| r.get(0))
+        .unwrap_or(0);
+
+    Ok(serde_json::json!({
+        "total_sessions": total_sessions,
+        "total_minutes": total_minutes,
+    }))
 }
 
 /// Subtasks CRUD

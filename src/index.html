@@ -28,7 +28,7 @@
 
   <!-- Authentic Obsidian Phone Widget Slab -->
   <main class="phone-widget" id="widget-canvas" data-tauri-drag-region>
-    <!-- Widget Top Header (Natural Drag Surface) -->
+    <!-- Top Header -->
     <header class="widget-head" data-tauri-drag-region>
       <div class="head-left" data-tauri-drag-region>
         <div class="widget-avatar-icon" data-tauri-drag-region>
@@ -36,29 +36,69 @@
         </div>
         <div class="head-meta" data-tauri-drag-region>
           <span class="head-date" id="widget-date-display" data-tauri-drag-region>TODAY</span>
-          <span class="head-title" data-tauri-drag-region>Reminders</span>
+          <span class="head-title" id="widget-view-title" data-tauri-drag-region>Reminders</span>
         </div>
       </div>
 
       <div class="head-right" data-tauri-drag-region>
         <span class="badge-count" id="canvas-task-stats" data-tauri-drag-region>0</span>
-        <button class="head-control-btn" id="btn-toggle-pin" title="Toggle Pin Always-On-Top" aria-label="Pin">
+        
+        <!-- Search Toggle Button -->
+        <button class="head-control-btn" id="btn-toggle-search" title="Search tasks (Ctrl+F)" aria-label="Search">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+
+        <!-- Focus / Pomodoro Toggle Button -->
+        <button class="head-control-btn" id="btn-open-pomodoro" title="Pomodoro Focus Timer" aria-label="Focus Timer">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </button>
+
+        <!-- Settings Button -->
+        <button class="head-control-btn" id="btn-open-settings" title="Widget Settings" aria-label="Settings">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+
+        <!-- Pin to Top vs Wallpaper Mode -->
+        <button class="head-control-btn" id="btn-toggle-pin" title="Desktop Wallpaper Mode (Click to Pin on Top)" aria-label="Pin">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-2l-2-3V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v6l-2 3v2z"/></svg>
         </button>
+
+        <!-- Collapse to Dynamic Island -->
         <button class="head-control-btn" id="btn-collapse" title="Collapse to Dynamic Island" aria-label="Collapse">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
+
+        <!-- Close / Hide to Tray -->
         <button class="head-control-btn btn-close-cross" id="btn-close" title="Hide to System Tray" aria-label="Close">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
     </header>
 
+    <!-- Collapsible Search Row -->
+    <div class="search-bar-row" id="search-bar-row" style="display: none;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="search-input" class="search-input-field" placeholder="Search tasks, notes, tags..." autocomplete="off" />
+      <button class="search-clear-btn" id="btn-clear-search" title="Clear search">✕</button>
+    </div>
+
+    <!-- Quick Filter Chips (Today / Upcoming / Overdue / Completed / All / Lists) -->
+    <nav class="filter-chips-bar" id="filter-chips-bar">
+      <button class="filter-chip active" data-filter="today">Today</button>
+      <button class="filter-chip" data-filter="upcoming">Upcoming</button>
+      <button class="filter-chip" data-filter="all">All</button>
+      <button class="filter-chip" data-filter="overdue">Overdue</button>
+      <button class="filter-chip" data-filter="completed">Done</button>
+      <div class="filter-divider"></div>
+      <div class="lists-chip-group" id="lists-chip-container"></div>
+      <button class="filter-chip chip-add-list" id="btn-add-list-chip" title="Create new list">+</button>
+    </nav>
+
     <!-- Scrollable Task List -->
     <div class="widget-scroller" id="task-scroller">
       <div class="tasks-group" id="tasks-container"></div>
 
-      <!-- Inline Fast Add (Just like phone widgets) -->
+      <!-- Inline Fast Add -->
       <form class="inline-add-row" id="task-creator-form">
         <button type="submit" class="inline-add-btn" id="btn-submit-task" title="Add reminder" aria-label="Add task">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -71,14 +111,14 @@
           autocomplete="off"
           required
         />
-        <div class="prio-tag-button" id="prio-toggle-btn" title="Cycle Priority: Low / Medium / High">
+        <div class="prio-tag-button" id="prio-toggle-btn" title="Cycle Priority: Normal / Medium / High">
           <span class="prio-indicator-dot" id="prio-dot"></span>
           <span class="prio-indicator-label" id="prio-label">Normal</span>
         </div>
       </form>
     </div>
 
-    <!-- Phone Widget Bottom Status & Progress -->
+    <!-- Bottom Status & Progress -->
     <footer class="widget-bottom" data-tauri-drag-region>
       <div class="progress-track" data-tauri-drag-region>
         <div class="progress-fill" id="progress-bar-fill"></div>
@@ -88,7 +128,237 @@
         <button class="bottom-action-btn" id="btn-clear-completed" title="Clear completed tasks">Clear Done</button>
       </div>
     </footer>
+
+    <!-- Slide-Over Sheet: Task Details Inspector -->
+    <aside class="slide-sheet" id="sheet-task-details">
+      <header class="sheet-head">
+        <div class="sheet-title-group">
+          <span class="sheet-eyebrow">INSPECTOR</span>
+          <h3 class="sheet-title">Task Details</h3>
+        </div>
+        <button class="sheet-close-btn" id="btn-close-details" title="Close inspector">✕</button>
+      </header>
+
+      <div class="sheet-body">
+        <!-- Title Input -->
+        <div class="sheet-field">
+          <label class="sheet-label" for="detail-title-input">Title</label>
+          <input type="text" id="detail-title-input" class="sheet-input" placeholder="Task title" />
+        </div>
+
+        <!-- Meta Grid: Due Date & Priority -->
+        <div class="sheet-grid-2">
+          <div class="sheet-field">
+            <label class="sheet-label" for="detail-due-input">Due Date & Time</label>
+            <input type="datetime-local" id="detail-due-input" class="sheet-input" />
+          </div>
+          <div class="sheet-field">
+            <label class="sheet-label">Priority</label>
+            <div class="segmented-control" id="detail-prio-control">
+              <button class="segment-btn active" data-prio="0">Normal</button>
+              <button class="segment-btn" data-prio="1">Med</button>
+              <button class="segment-btn" data-prio="2">High</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meta Grid: List & Repeat -->
+        <div class="sheet-grid-2">
+          <div class="sheet-field">
+            <label class="sheet-label" for="detail-list-select">List</label>
+            <select id="detail-list-select" class="sheet-select">
+              <option value="">(None)</option>
+            </select>
+          </div>
+          <div class="sheet-field">
+            <label class="sheet-label" for="detail-repeat-select">Repeat Rule</label>
+            <select id="detail-repeat-select" class="sheet-select">
+              <option value="none">Does not repeat</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="sheet-field">
+          <label class="sheet-label" for="detail-notes-input">Notes</label>
+          <textarea id="detail-notes-input" class="sheet-textarea" placeholder="Add notes, context, or links..."></textarea>
+        </div>
+
+        <!-- Subtasks Section -->
+        <div class="sheet-section">
+          <div class="sheet-section-head">
+            <label class="sheet-label">Subtasks (<span id="detail-subtask-stats">0/0</span>)</label>
+            <div class="subtask-mini-track">
+              <div class="subtask-mini-fill" id="detail-subtask-progress-fill"></div>
+            </div>
+          </div>
+          <div class="subtasks-container" id="detail-subtasks-list"></div>
+          <form class="subtask-add-row" id="detail-add-subtask-form">
+            <input type="text" id="detail-add-subtask-input" class="subtask-add-input" placeholder="Add step... (Enter)" />
+            <button type="submit" class="subtask-add-btn">+</button>
+          </form>
+        </div>
+
+        <!-- Pomodoro Focus Card linked to Task -->
+        <div class="sheet-section pomo-card">
+          <div class="pomo-card-head">
+            <span class="pomo-card-title">⏱️ Pomodoro Focus</span>
+            <span class="pomo-session-badge" id="detail-pomo-status">Ready</span>
+          </div>
+          <div class="pomo-timer-display" id="detail-pomo-time">25:00</div>
+          <div class="pomo-controls">
+            <button class="pomo-btn pomo-start" id="btn-detail-pomo-start">Start Focus</button>
+            <button class="pomo-btn pomo-reset" id="btn-detail-pomo-reset">Reset</button>
+          </div>
+        </div>
+
+        <!-- Snooze Quick Actions -->
+        <div class="sheet-section">
+          <label class="sheet-label">Quick Snooze</label>
+          <div class="snooze-buttons-row">
+            <button class="snooze-chip" id="btn-snooze-10m">+10 min</button>
+            <button class="snooze-chip" id="btn-snooze-1h">+1 hour</button>
+            <button class="snooze-chip" id="btn-snooze-tomorrow">Tomorrow</button>
+          </div>
+        </div>
+
+        <!-- Sheet Footer: Delete Task -->
+        <div class="sheet-danger-row">
+          <button class="sheet-delete-task-btn" id="btn-detail-delete-task">Delete Reminder</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Slide-Over Sheet: Standalone Pomodoro Timer -->
+    <aside class="slide-sheet" id="sheet-pomodoro">
+      <header class="sheet-head">
+        <div class="sheet-title-group">
+          <span class="sheet-eyebrow">DEEP WORK</span>
+          <h3 class="sheet-title">Pomodoro Timer</h3>
+        </div>
+        <button class="sheet-close-btn" id="btn-close-pomodoro" title="Close Pomodoro">✕</button>
+      </header>
+
+      <div class="sheet-body pomo-modal-body">
+        <div class="segmented-control pomo-mode-selector">
+          <button class="segment-btn active" data-pomo-duration="25">Focus (25m)</button>
+          <button class="segment-btn" data-pomo-duration="5">Break (5m)</button>
+          <button class="segment-btn" data-pomo-duration="15">Long (15m)</button>
+        </div>
+
+        <div class="pomo-circle-wrapper">
+          <svg class="pomo-svg-ring" viewBox="0 0 100 100">
+            <circle class="pomo-ring-bg" cx="50" cy="50" r="44"></circle>
+            <circle class="pomo-ring-fill" id="pomo-ring-progress" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"></circle>
+          </svg>
+          <div class="pomo-circle-content">
+            <div class="pomo-huge-timer" id="standalone-pomo-time">25:00</div>
+            <div class="pomo-mode-label" id="standalone-pomo-label">STAY FOCUSED</div>
+          </div>
+        </div>
+
+        <div class="pomo-controls-large">
+          <button class="pomo-action-btn pomo-primary-btn" id="btn-standalone-pomo-toggle">Start Timer</button>
+          <button class="pomo-action-btn pomo-secondary-btn" id="btn-standalone-pomo-reset">Reset</button>
+        </div>
+
+        <div class="pomo-stats-grid">
+          <div class="pomo-stat-card">
+            <span class="pomo-stat-val" id="pomo-total-sessions">0</span>
+            <span class="pomo-stat-lbl">Sessions Completed</span>
+          </div>
+          <div class="pomo-stat-card">
+            <span class="pomo-stat-val" id="pomo-total-minutes">0m</span>
+            <span class="pomo-stat-lbl">Focus Time</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Slide-Over Sheet: Settings & Personalization -->
+    <aside class="slide-sheet" id="sheet-settings">
+      <header class="sheet-head">
+        <div class="sheet-title-group">
+          <span class="sheet-eyebrow">PREFERENCES</span>
+          <h3 class="sheet-title">Widget Settings</h3>
+        </div>
+        <button class="sheet-close-btn" id="btn-close-settings" title="Close settings">✕</button>
+      </header>
+
+      <div class="sheet-body">
+        <!-- Accent Color Swatches -->
+        <div class="sheet-field">
+          <label class="sheet-label">Accent Theme Color</label>
+          <div class="swatches-palette" id="theme-swatches-container">
+            <button class="swatch-btn active" data-color="#6366f1" style="background: #6366f1;" title="Indigo"></button>
+            <button class="swatch-btn" data-color="#10b981" style="background: #10b981;" title="Emerald"></button>
+            <button class="swatch-btn" data-color="#f59e0b" style="background: #f59e0b;" title="Amber"></button>
+            <button class="swatch-btn" data-color="#f43f5e" style="background: #f43f5e;" title="Rose"></button>
+            <button class="swatch-btn" data-color="#8b5cf6" style="background: #8b5cf6;" title="Violet"></button>
+            <button class="swatch-btn" data-color="#06b6d4" style="background: #06b6d4;" title="Cyan"></button>
+          </div>
+        </div>
+
+        <!-- Glass Opacity Slider -->
+        <div class="sheet-field">
+          <div class="field-label-split">
+            <label class="sheet-label" for="setting-opacity-slider">Glass Opacity</label>
+            <span class="field-val-pill" id="opacity-val-label">85%</span>
+          </div>
+          <input type="range" id="setting-opacity-slider" min="50" max="100" value="85" class="sheet-range" />
+        </div>
+
+        <!-- Sound Feedback Toggle -->
+        <div class="sheet-toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">Micro-Sound Effects</span>
+            <span class="toggle-desc">Pop on completion, audio bell on timer done</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-sound-toggle" checked />
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <!-- Data Backup & Restore -->
+        <div class="sheet-section">
+          <label class="sheet-label">Data Backup & Restore</label>
+          <div class="data-actions-row">
+            <button class="data-btn" id="btn-export-json">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export JSON
+            </button>
+            <label class="data-btn file-upload-label" for="input-import-json">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Import JSON
+              <input type="file" id="input-import-json" accept=".json" style="display: none;" />
+            </label>
+          </div>
+        </div>
+
+        <!-- About & Storage -->
+        <div class="sheet-info-card">
+          <span class="info-card-text">Tododo v0.1.0 • Obsidian Wallpaper Widget</span>
+          <span class="info-card-sub">SQLite Local Storage (%APPDATA%/com.tododo.desktop)</span>
+        </div>
+      </div>
+    </aside>
   </main>
+
+  <!-- Live Due Reminder Banner -->
+  <aside class="reminder-banner" id="banner-task-due" style="display: none;">
+    <div class="banner-icon">🔔</div>
+    <div class="banner-body">
+      <span class="banner-eyebrow">TASK DUE</span>
+      <span class="banner-title" id="banner-due-task-title">Task Title</span>
+    </div>
+    <div class="banner-actions">
+      <button class="banner-btn banner-btn-done" id="btn-banner-mark-done">Done</button>
+      <button class="banner-btn banner-btn-snooze" id="btn-banner-snooze">Snooze 10m</button>
+    </div>
+  </aside>
 
   <!-- Quick Feedback Toast -->
   <div class="toast-card" id="toast-notification">
