@@ -14,9 +14,9 @@
       {
         "title": "Tododo",
         "label": "main",
-        "width": 360,
-        "height": 580,
-        "minWidth": 300,
+        "width": 350,
+        "height": 460,
+        "minWidth": 280,
         "minHeight": 44,
         "resizable": true,
         "transparent": true,

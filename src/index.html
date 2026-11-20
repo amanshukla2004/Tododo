@@ -7,10 +7,10 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Ambient Glance Pill (Active when collapsed into Dynamic Island) -->
+  <!-- Ambient Dynamic Island Capsule (Collapsed Mode) -->
   <aside class="glance-pill" id="glance-pill" data-tauri-drag-region>
     <div class="glance-left" data-tauri-drag-region>
-      <div class="glance-ring-wrapper">
+      <div class="glance-ring-wrapper" data-tauri-drag-region>
         <svg class="glance-ring" viewBox="0 0 36 36">
           <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
           <path class="ring-progress" id="glance-progress-path" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -20,217 +20,80 @@
       <span class="glance-title" id="glance-title" data-tauri-drag-region>All caught up! 🎉</span>
     </div>
     <div class="glance-actions">
-      <button class="pill-action-btn" id="btn-glance-expand" title="Expand widget" aria-label="Expand widget">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      <button class="pill-expand-btn" id="btn-glance-expand" title="Expand to Widget" aria-label="Expand">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
       </button>
     </div>
   </aside>
 
-  <!-- Phone Widget Slab Canvas -->
-  <main class="widget-canvas" id="widget-canvas">
-    <!-- Clean Minimalist Header (Draggable everywhere) -->
-    <header class="phone-header" data-tauri-drag-region>
-      <div class="header-top-meta" data-tauri-drag-region>
-        <span class="widget-date" id="widget-date-display" data-tauri-drag-region>TODAY</span>
-        <div class="widget-micro-controls">
-          <button class="glass-icon-btn" id="btn-toggle-pin" title="Pin / Desktop mode" aria-label="Toggle pin mode">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-2l-2-3V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v6l-2 3v2z"/></svg>
-          </button>
-          <button class="glass-icon-btn" id="btn-collapse" title="Collapse to Dynamic Island" aria-label="Collapse widget">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
-          <button class="glass-icon-btn" id="btn-settings-toggle" title="Settings" aria-label="Open settings">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          </button>
-          <button class="glass-icon-btn btn-close-x" id="btn-close" title="Minimize to Tray" aria-label="Close widget">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+  <!-- Authentic Obsidian Phone Widget Slab -->
+  <main class="phone-widget" id="widget-canvas" data-tauri-drag-region>
+    <!-- Widget Top Header (Natural Drag Surface) -->
+    <header class="widget-head" data-tauri-drag-region>
+      <div class="head-left" data-tauri-drag-region>
+        <div class="widget-avatar-icon" data-tauri-drag-region>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="head-meta" data-tauri-drag-region>
+          <span class="head-date" id="widget-date-display" data-tauri-drag-region>TODAY</span>
+          <span class="head-title" data-tauri-drag-region>Reminders</span>
         </div>
       </div>
 
-      <div class="header-main-row" data-tauri-drag-region>
-        <h1 class="widget-headline" data-tauri-drag-region>Focus</h1>
-        <div class="headline-badge-wrap" data-tauri-drag-region>
-          <span class="headline-badge" id="canvas-task-stats">0 left</span>
-        </div>
+      <div class="head-right" data-tauri-drag-region>
+        <span class="badge-count" id="canvas-task-stats" data-tauri-drag-region>0</span>
+        <button class="head-control-btn" id="btn-toggle-pin" title="Toggle Pin Always-On-Top" aria-label="Pin">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-2l-2-3V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v6l-2 3v2z"/></svg>
+        </button>
+        <button class="head-control-btn" id="btn-collapse" title="Collapse to Dynamic Island" aria-label="Collapse">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="head-control-btn btn-close-cross" id="btn-close" title="Hide to System Tray" aria-label="Close">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
     </header>
 
-    <!-- Quick Add Capsule Bar -->
-    <form class="phone-input-bar" id="task-creator-form">
-      <div class="input-capsule">
-        <span class="capsule-pulse-dot"></span>
+    <!-- Scrollable Task List -->
+    <div class="widget-scroller" id="task-scroller">
+      <div class="tasks-group" id="tasks-container"></div>
+
+      <!-- Inline Fast Add (Just like phone widgets) -->
+      <form class="inline-add-row" id="task-creator-form">
+        <button type="submit" class="inline-add-btn" id="btn-submit-task" title="Add reminder" aria-label="Add task">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
         <input
           type="text"
           id="task-title-input"
-          class="capsule-input"
-          placeholder="Add a task... (Enter or +)"
+          class="inline-add-input"
+          placeholder="New reminder... (Enter to save)"
           autocomplete="off"
           required
         />
-        <button type="submit" class="capsule-submit-btn" id="btn-submit-task" title="Add Task" aria-label="Add task">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-      </div>
-
-      <!-- Quick Priority Selector Pills -->
-      <div class="priority-chips-row">
-        <button type="button" class="quick-chip" data-tag="!high" title="Set High Priority">
-          <span class="chip-dot dot-high"></span> High
-        </button>
-        <button type="button" class="quick-chip" data-tag="!med" title="Set Medium Priority">
-          <span class="chip-dot dot-med"></span> Medium
-        </button>
-        <div class="filter-pills-segment">
-          <button type="button" class="filter-tab active" data-filter="today">Today</button>
-          <button type="button" class="filter-tab" data-filter="all">All</button>
-          <button type="button" class="filter-tab" data-filter="completed">Done</button>
+        <div class="prio-tag-button" id="prio-toggle-btn" title="Cycle Priority: Low / Medium / High">
+          <span class="prio-indicator-dot" id="prio-dot"></span>
+          <span class="prio-indicator-label" id="prio-label">Normal</span>
         </div>
-      </div>
-    </form>
-
-    <!-- Scrollable Task Items Section -->
-    <section class="task-scroller" id="task-scroller">
-      <!-- Pinned Section -->
-      <div class="task-group" id="group-pinned" style="display: none;">
-        <div class="group-label">PINNED</div>
-        <div class="task-items" id="list-pinned"></div>
-      </div>
-
-      <!-- Main Focus Section -->
-      <div class="task-group" id="group-main">
-        <div class="group-label" id="main-group-title">TASKS</div>
-        <div class="task-items" id="list-main"></div>
-      </div>
-
-      <!-- Completed Section -->
-      <div class="task-group" id="group-completed" style="display: none;">
-        <div class="group-label group-interactive" id="btn-toggle-completed">
-          <span>COMPLETED (<span id="completed-count">0</span>)</span>
-        </div>
-        <div class="task-items" id="list-completed"></div>
-      </div>
-
-      <!-- Empty State -->
-      <div class="empty-state" id="empty-state" style="display: none;">
-        <div class="empty-sparkle">✦</div>
-        <p class="empty-title">You're All Caught Up</p>
-        <p class="empty-sub">Add a task above to start your flow.</p>
-      </div>
-    </section>
+      </form>
+    </div>
 
     <!-- Phone Widget Bottom Status & Progress -->
-    <footer class="widget-footer" data-tauri-drag-region>
-      <div class="progress-bar-container">
-        <div class="progress-bar-fill" id="progress-bar-fill"></div>
+    <footer class="widget-bottom" data-tauri-drag-region>
+      <div class="progress-track" data-tauri-drag-region>
+        <div class="progress-fill" id="progress-bar-fill"></div>
       </div>
-      <div class="footer-meta-row" data-tauri-drag-region>
-        <span class="footer-progress-label" id="footer-progress-text" data-tauri-drag-region>0 of 0 completed</span>
-        <button class="footer-action-link" id="btn-clear-completed" title="Clear all completed tasks">Clear Done</button>
+      <div class="bottom-meta" data-tauri-drag-region>
+        <span class="bottom-stats-text" id="footer-progress-text" data-tauri-drag-region>0 completed</span>
+        <button class="bottom-action-btn" id="btn-clear-completed" title="Clear completed tasks">Clear Done</button>
       </div>
     </footer>
   </main>
 
-  <!-- Sliding Task Details Drawer -->
-  <aside class="details-drawer" id="details-drawer">
-    <div class="drawer-header">
-      <span class="drawer-title">Details</span>
-      <button class="drawer-close" id="btn-close-drawer" aria-label="Close details">✕</button>
-    </div>
-    <div class="drawer-body">
-      <input type="text" class="drawer-input-title" id="drawer-task-title" placeholder="Task title" />
-      
-      <!-- Priority segmented selector -->
-      <div class="drawer-field">
-        <label class="drawer-label">Priority</label>
-        <div class="segmented-control" id="drawer-priority-picker">
-          <button class="segment-btn active" data-priority="0">Low</button>
-          <button class="segment-btn" data-priority="1">Medium</button>
-          <button class="segment-btn" data-priority="2">High</button>
-        </div>
-      </div>
-
-      <!-- Notes area -->
-      <div class="drawer-field">
-        <label class="drawer-label">Notes</label>
-        <textarea class="drawer-notes" id="drawer-task-notes" placeholder="Add additional details..."></textarea>
-      </div>
-
-      <!-- Subtasks Checklist -->
-      <div class="drawer-field">
-        <div class="subtasks-header">
-          <label class="drawer-label">Subtasks (<span id="drawer-subtask-progress">0/0</span>)</label>
-        </div>
-        <div class="subtasks-list" id="drawer-subtasks-list"></div>
-        <form class="subtask-add-form" id="subtask-add-form">
-          <input type="text" class="subtask-add-input" id="subtask-add-input" placeholder="Add a step and press Enter..." />
-        </form>
-      </div>
-
-      <!-- Pomodoro Focus Timer -->
-      <div class="drawer-field">
-        <label class="drawer-label">Focus Timer</label>
-        <div class="pomodoro-card">
-          <div class="pomodoro-timer" id="pomodoro-timer-display">25:00</div>
-          <div class="pomodoro-controls">
-            <button class="pomodoro-btn" id="btn-pomo-toggle">Start Focus</button>
-            <button class="pomodoro-btn btn-secondary" id="btn-pomo-reset">Reset</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="drawer-actions">
-        <button class="btn-danger" id="btn-delete-task">Delete Task</button>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Settings Modal -->
-  <aside class="settings-modal" id="settings-modal">
-    <div class="settings-header">
-      <span class="drawer-title">Widget Settings</span>
-      <button class="drawer-close" id="btn-close-settings" aria-label="Close settings">✕</button>
-    </div>
-    <div class="settings-body">
-      <div class="drawer-field">
-        <label class="drawer-label">Widget Position Mode</label>
-        <div class="segmented-control" id="window-mode-control">
-          <button class="segment-btn active" data-mode="normal" title="Sits on desktop wallpaper">Desktop</button>
-          <button class="segment-btn" data-mode="desktop" title="Pinned behind all open windows">Background</button>
-          <button class="segment-btn" data-mode="top" title="Always floating on top of windows">Hover on Top</button>
-        </div>
-      </div>
-      <div class="drawer-field">
-        <label class="drawer-label">Glass Opacity (<span id="opacity-val-label">72%</span>)</label>
-        <div class="slider-row">
-          <input type="range" min="30" max="100" value="72" class="opacity-slider" id="opacity-slider" />
-        </div>
-      </div>
-      <div class="drawer-field">
-        <label class="drawer-label">Accent Theme</label>
-        <div class="color-swatches" id="color-swatches">
-          <span class="color-swatch active" data-color="#818cf8" style="background: #818cf8;" title="Electric Indigo"></span>
-          <span class="color-swatch" data-color="#34d399" style="background: #34d399;" title="Emerald Glow"></span>
-          <span class="color-swatch" data-color="#f472b6" style="background: #f472b6;" title="Rose Pink"></span>
-          <span class="color-swatch" data-color="#fbbf24" style="background: #fbbf24;" title="Amber Gold"></span>
-          <span class="color-swatch" data-color="#38bdf8" style="background: #38bdf8;" title="Sky Cyan"></span>
-        </div>
-      </div>
-      <div class="drawer-field">
-        <label class="drawer-label">Feedback Sound</label>
-        <div class="segmented-control" id="sound-toggle-control">
-          <button class="segment-btn active" data-sound="true">Enabled</button>
-          <button class="segment-btn" data-sound="false">Mute</button>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Quick Undo Toast Notification -->
-  <div class="toast-notification" id="toast-notification">
-    <span class="toast-message" id="toast-message">Task deleted</span>
-    <button class="toast-undo-btn" id="toast-undo-btn">Undo</button>
+  <!-- Quick Feedback Toast -->
+  <div class="toast-card" id="toast-notification">
+    <span class="toast-txt" id="toast-message">Task updated</span>
+    <button class="toast-undo" id="toast-undo-btn">Undo</button>
   </div>
 
   <script src="app.js"></script>

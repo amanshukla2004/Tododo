@@ -1,41 +1,42 @@
 /**
- * Tododo — Phone-Grade Desktop Wallpaper Widget Controller
- * Pure Vanilla JavaScript | Zero Frameworks | Strict textContent
+ * Tododo — Authentic Phone-Grade Desktop Wallpaper Widget
+ * Production-ready Vanilla JS Controller
+ * Direct Native IPC via window.__TAURI_INTERNALS__ & window.__TAURI__
  */
 
 // Application State
 const state = {
-  currentFilter: "today",
   tasks: [],
-  activeTaskId: null,
+  selectedPriority: 0, // 0: Normal, 1: Medium, 2: High
   isGlanceMode: false,
-  windowMode: "normal", // "normal" (wallpaper widget), "desktop" (pinned behind all), "top" (hover)
   isPinnedAlwaysOnTop: false,
-  selectedPriority: 0,
   lastDeletedTask: null,
   audioCtx: null,
 };
 
-// Tauri IPC Bridge
+// Resilient Tauri v2 IPC Bridge
 const tauri = {
   invoke: async (cmd, args = {}) => {
+    // 1. Core Native IPC Bridge in Tauri v2
+    if (window.__TAURI_INTERNALS__ && typeof window.__TAURI_INTERNALS__.invoke === "function") {
+      return await window.__TAURI_INTERNALS__.invoke(cmd, args);
+    }
+    // 2. Global API Bridge if bundled
     if (window.__TAURI__?.core?.invoke) {
       return await window.__TAURI__.core.invoke(cmd, args);
     }
     if (window.__TAURI__?.invoke) {
       return await window.__TAURI__.invoke(cmd, args);
     }
-    console.warn(`[Tauri Mock Invoke] ${cmd}:`, args);
-    return mockInvoke(cmd, args);
+    console.error("[Tododo IPC Error] Tauri IPC bridge not found on window object.");
+    throw new Error("Tauri IPC bridge not found. Make sure you are running within Tauri.");
   },
   getCurrentWindow: () => {
-    if (window.__TAURI__) {
-      if (window.__TAURI__.webviewWindow?.getCurrentWebviewWindow) {
-        return window.__TAURI__.webviewWindow.getCurrentWebviewWindow();
-      }
-      if (window.__TAURI__.window?.getCurrentWindow) {
-        return window.__TAURI__.window.getCurrentWindow();
-      }
+    if (window.__TAURI__?.webviewWindow?.getCurrentWebviewWindow) {
+      return window.__TAURI__.webviewWindow.getCurrentWebviewWindow();
+    }
+    if (window.__TAURI__?.window?.getCurrentWindow) {
+      return window.__TAURI__.window.getCurrentWindow();
     }
     return null;
   }
@@ -45,73 +46,91 @@ const tauri = {
 // Initialization
 // ==========================================================================
 document.addEventListener("DOMContentLoaded", async () => {
-  renderDate();
+  renderHeaderDate();
   setupEventListeners();
-  await loadSavedSettings();
   await loadTasks();
 });
 
-function renderDate() {
+function renderHeaderDate() {
   const dateEl = document.getElementById("widget-date-display");
   if (!dateEl) return;
   const now = new Date();
   const options = { weekday: "short", month: "short", day: "numeric" };
-  const formatted = now.toLocaleDateString("en-US", options).toUpperCase();
-  dateEl.textContent = `TODAY • ${formatted}`;
+  dateEl.textContent = `TODAY • ${now.toLocaleDateString("en-US", options).toUpperCase()}`;
 }
 
 // ==========================================================================
-// Event Listeners & Controls
+// Event Listeners
 // ==========================================================================
 function setupEventListeners() {
   const form = document.getElementById("task-creator-form");
   const input = document.getElementById("task-title-input");
+  const prioBtn = document.getElementById("prio-toggle-btn");
+  const prioDot = document.getElementById("prio-dot");
+  const prioLabel = document.getElementById("prio-label");
 
-  // Quick Priority Chips
-  document.querySelectorAll(".quick-chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      const tag = chip.dataset.tag;
-      if (chip.classList.contains("active")) {
-        chip.classList.remove("active");
-        state.selectedPriority = 0;
-      } else {
-        document.querySelectorAll(".quick-chip").forEach((c) => c.classList.remove("active"));
-        chip.classList.add("active");
-        state.selectedPriority = tag === "!high" ? 2 : 1;
-      }
-      input.focus();
-    });
+  // Cycle Priority on Tag Click (Normal -> Medium -> High -> Normal)
+  prioBtn.addEventListener("click", () => {
+    state.selectedPriority = (state.selectedPriority + 1) % 3;
+    updatePriorityUI();
+    input.focus();
   });
 
-  // Task Creation (Enter or Submit Button)
+  function updatePriorityUI() {
+    if (state.selectedPriority === 2) {
+      prioDot.style.background = "var(--prio-high)";
+      prioDot.style.boxShadow = "0 0 8px var(--prio-high)";
+      prioLabel.textContent = "High";
+      prioLabel.style.color = "var(--prio-high)";
+    } else if (state.selectedPriority === 1) {
+      prioDot.style.background = "var(--prio-med)";
+      prioDot.style.boxShadow = "0 0 8px var(--prio-med)";
+      prioLabel.textContent = "Medium";
+      prioLabel.style.color = "var(--prio-med)";
+    } else {
+      prioDot.style.background = "var(--text-dim)";
+      prioDot.style.boxShadow = "none";
+      prioLabel.textContent = "Normal";
+      prioLabel.style.color = "var(--text-sub)";
+    }
+  }
+
+  // Auto-detect !high or !med while typing
+  input.addEventListener("input", () => {
+    const val = input.value.toLowerCase();
+    if (val.includes("!high") || val.includes("!urgent")) {
+      state.selectedPriority = 2;
+      updatePriorityUI();
+    } else if (val.includes("!med") || val.includes("!medium")) {
+      state.selectedPriority = 1;
+      updatePriorityUI();
+    }
+  });
+
+  // Fast Task Creation (Submit button or Enter)
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const rawVal = input.value.trim();
     if (!rawVal) return;
 
-    let priority = state.selectedPriority;
-    let cleanTitle = rawVal;
+    let cleanTitle = rawVal
+      .replace(/!high/gi, "")
+      .replace(/!urgent/gi, "")
+      .replace(/!med(ium)?/gi, "")
+      .replace(/!low/gi, "")
+      .trim();
 
-    if (cleanTitle.includes("!high") || cleanTitle.includes("!urgent")) {
-      priority = 2;
-      cleanTitle = cleanTitle.replace("!high", "").replace("!urgent", "").trim();
-    } else if (cleanTitle.includes("!med") || cleanTitle.includes("!medium")) {
-      priority = 1;
-      cleanTitle = cleanTitle.replace("!med", "").replace("!medium", "").trim();
-    } else if (cleanTitle.includes("!low")) {
-      priority = 0;
-      cleanTitle = cleanTitle.replace("!low", "").trim();
-    }
+    if (!cleanTitle) return;
 
     try {
       await tauri.invoke("add_task", {
         title: cleanTitle,
-        priority: priority,
+        priority: state.selectedPriority,
       });
 
       input.value = "";
       state.selectedPriority = 0;
-      document.querySelectorAll(".quick-chip").forEach((c) => c.classList.remove("active"));
+      updatePriorityUI();
       playPopSound();
       await loadTasks();
     } catch (err) {
@@ -120,19 +139,8 @@ function setupEventListeners() {
     }
   });
 
-  // Filter Tabs
-  document.querySelectorAll(".filter-tab").forEach((tab) => {
-    tab.addEventListener("click", async () => {
-      document.querySelectorAll(".filter-tab").forEach((t) => t.classList.remove("active"));
-      tab.classList.add("active");
-      state.currentFilter = tab.dataset.filter;
-      await loadTasks();
-    });
-  });
-
   // Clear Completed
-  document.getElementById("btn-clear-completed").addEventListener("click", async (e) => {
-    e.stopPropagation();
+  document.getElementById("btn-clear-completed").addEventListener("click", async () => {
     try {
       await tauri.invoke("clear_completed");
       playPopSound();
@@ -151,163 +159,13 @@ function setupEventListeners() {
     if (win) win.hide();
   });
 
-  // Details Drawer Controls
-  document.getElementById("btn-close-drawer").addEventListener("click", closeDrawer);
-  document.getElementById("drawer-task-title").addEventListener("change", async (e) => {
-    if (!state.activeTaskId) return;
-    await tauri.invoke("update_task", {
-      id: state.activeTaskId,
-      title: e.target.value.trim(),
-    });
-    await loadTasks();
-  });
-
-  document.getElementById("drawer-task-notes").addEventListener("change", async (e) => {
-    if (!state.activeTaskId) return;
-    await tauri.invoke("update_task", {
-      id: state.activeTaskId,
-      notes: e.target.value,
-    });
-    await loadTasks();
-  });
-
-  document.querySelectorAll("#drawer-priority-picker .segment-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      if (!state.activeTaskId) return;
-      const prio = parseInt(btn.dataset.priority, 10);
-      document.querySelectorAll("#drawer-priority-picker .segment-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      await tauri.invoke("update_task", {
-        id: state.activeTaskId,
-        priority: prio,
-      });
-      await loadTasks();
-    });
-  });
-
-  document.getElementById("btn-delete-task").addEventListener("click", async () => {
-    if (!state.activeTaskId) return;
-    const taskToDelete = state.tasks.find((t) => t.id === state.activeTaskId);
-    state.lastDeletedTask = taskToDelete;
-
-    await tauri.invoke("delete_task", { id: state.activeTaskId });
-    closeDrawer();
-    showToast("Task removed", undoDelete);
-    await loadTasks();
-  });
-
-  // Subtasks Add
-  document.getElementById("subtask-add-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (!state.activeTaskId) return;
-    const subInput = document.getElementById("subtask-add-input");
-    const subTitle = subInput.value.trim();
-    if (!subTitle) return;
-
-    await tauri.invoke("add_subtask", {
-      taskId: state.activeTaskId,
-      title: subTitle,
-    });
-    subInput.value = "";
-    playPopSound();
-    await refreshSubtasks(state.activeTaskId);
-    await loadTasks();
-  });
-
-  // Settings Modal Controls
-  document.getElementById("btn-settings-toggle").addEventListener("click", () => {
-    document.getElementById("settings-modal").classList.add("open");
-  });
-  document.getElementById("btn-close-settings").addEventListener("click", () => {
-    document.getElementById("settings-modal").classList.remove("open");
-  });
-
-  // Window Mode Selector
-  document.querySelectorAll("#window-mode-control .segment-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const mode = btn.dataset.mode;
-      await applyWindowMode(mode);
-    });
-  });
-
-  const opacitySlider = document.getElementById("opacity-slider");
-  const opacityLabel = document.getElementById("opacity-val-label");
-  opacitySlider.addEventListener("input", (e) => {
-    const val = e.target.value;
-    opacityLabel.textContent = `${val}%`;
-    const alpha = val / 100;
-    document.documentElement.style.setProperty("--bg-deep", `rgba(14, 17, 26, ${alpha})`);
-    tauri.invoke("save_setting", { key: "opacity", value: String(val) });
-  });
-
-  // Color Swatches
-  document.querySelectorAll(".color-swatch").forEach((swatch) => {
-    swatch.addEventListener("click", () => {
-      document.querySelectorAll(".color-swatch").forEach((s) => s.classList.remove("active"));
-      swatch.classList.add("active");
-      const color = swatch.dataset.color;
-      document.documentElement.style.setProperty("--accent-indigo", color);
-      document.documentElement.style.setProperty("--accent-glow", `${color}40`);
-      tauri.invoke("save_setting", { key: "accent_color", value: color });
-    });
-  });
-
-  // Pomodoro Focus Timer
-  let pomoSeconds = 25 * 60;
-  let pomoInterval = null;
-  const pomoDisplay = document.getElementById("pomodoro-timer-display");
-  const btnPomoToggle = document.getElementById("btn-pomo-toggle");
-  const btnPomoReset = document.getElementById("btn-pomo-reset");
-
-  function updatePomoDisplay() {
-    const mins = String(Math.floor(pomoSeconds / 60)).padStart(2, "0");
-    const secs = String(pomoSeconds % 60).padStart(2, "0");
-    pomoDisplay.textContent = `${mins}:${secs}`;
-  }
-
-  btnPomoToggle.addEventListener("click", () => {
-    if (pomoInterval) {
-      clearInterval(pomoInterval);
-      pomoInterval = null;
-      btnPomoToggle.textContent = "Resume Focus";
-    } else {
-      btnPomoToggle.textContent = "Pause";
-      pomoInterval = setInterval(() => {
-        if (pomoSeconds > 0) {
-          pomoSeconds -= 1;
-          updatePomoDisplay();
-        } else {
-          clearInterval(pomoInterval);
-          pomoInterval = null;
-          btnPomoToggle.textContent = "Start Focus";
-          playPopSound();
-          showToast("Focus session complete! 🎉");
-        }
-      }, 1000);
-    }
-  });
-
-  btnPomoReset.addEventListener("click", () => {
-    if (pomoInterval) {
-      clearInterval(pomoInterval);
-      pomoInterval = null;
-    }
-    pomoSeconds = 25 * 60;
-    btnPomoToggle.textContent = "Start Focus";
-    updatePomoDisplay();
-  });
-
   // Global Keyboard Shortcuts
   window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeDrawer();
-      document.getElementById("settings-modal").classList.remove("open");
-    }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
       e.preventDefault();
       undoDelete();
     }
-    if (e.key === "Tab" && !e.target.matches("input, textarea")) {
+    if (e.key === "Tab" && !e.target.matches("input")) {
       e.preventDefault();
       toggleGlanceMode();
     }
@@ -315,70 +173,37 @@ function setupEventListeners() {
 }
 
 // ==========================================================================
-// Data Fetching & Strict textContent Rendering
+// Data Fetching & Rendering
 // ==========================================================================
 async function loadTasks() {
   try {
-    const tasks = await tauri.invoke("get_tasks", { filter: state.currentFilter });
+    const tasks = await tauri.invoke("get_tasks", { filter: "all" });
     state.tasks = tasks || [];
     renderTasks();
     updateGlancePill();
     updateProgressFooter();
   } catch (err) {
     console.error("Failed to load tasks:", err);
+    showToast("Database error: " + String(err));
   }
 }
 
 function renderTasks() {
-  const pinnedList = document.getElementById("list-pinned");
-  const mainList = document.getElementById("list-main");
-  const completedList = document.getElementById("list-completed");
-  const emptyState = document.getElementById("empty-state");
-  const pinnedGroup = document.getElementById("group-pinned");
-  const completedGroup = document.getElementById("group-completed");
-  const completedCount = document.getElementById("completed-count");
-  const taskStats = document.getElementById("canvas-task-stats");
+  const container = document.getElementById("tasks-container");
+  const countBadge = document.getElementById("canvas-task-stats");
+  container.replaceChildren();
 
-  pinnedList.replaceChildren();
-  mainList.replaceChildren();
-  completedList.replaceChildren();
-
-  const pinnedTasks = state.tasks.filter((t) => t.pinned && !t.done);
-  const regularTasks = state.tasks.filter((t) => !t.pinned && !t.done);
+  const activeTasks = state.tasks.filter((t) => !t.done);
   const doneTasks = state.tasks.filter((t) => t.done);
 
-  // Update header stats
-  const activeCount = regularTasks.length + pinnedTasks.length;
-  taskStats.textContent = `${activeCount} left`;
+  countBadge.textContent = String(activeTasks.length);
 
-  // Pinned Section
-  if (pinnedTasks.length > 0) {
-    pinnedGroup.style.display = "block";
-    pinnedTasks.forEach((t) => pinnedList.appendChild(createTaskRow(t)));
-  } else {
-    pinnedGroup.style.display = "none";
-  }
+  // Render active tasks first, then completed tasks at the bottom
+  const allSorted = [...activeTasks, ...doneTasks];
 
-  // Focus Section
-  if (regularTasks.length > 0) {
-    regularTasks.forEach((t) => mainList.appendChild(createTaskRow(t)));
-  }
-
-  // Completed Section
-  if (doneTasks.length > 0) {
-    completedGroup.style.display = "block";
-    completedCount.textContent = String(doneTasks.length);
-    doneTasks.forEach((t) => completedList.appendChild(createTaskRow(t)));
-  } else {
-    completedGroup.style.display = "none";
-  }
-
-  // Empty State
-  if (pinnedTasks.length === 0 && regularTasks.length === 0 && doneTasks.length === 0) {
-    emptyState.style.display = "flex";
-  } else {
-    emptyState.style.display = "none";
-  }
+  allSorted.forEach((task) => {
+    container.appendChild(createTaskCard(task));
+  });
 }
 
 function updateProgressFooter() {
@@ -393,95 +218,77 @@ function updateProgressFooter() {
     text.textContent = `${done} of ${total} completed (${pct}%)`;
   } else {
     fill.style.width = "0%";
-    text.textContent = "0 tasks";
+    text.textContent = "0 reminders";
   }
 }
 
 // ==========================================================================
-// Task Row Creation (Phone-Widget Micro-Card)
+// Task Card Creation (Phone Widget Element)
 // ==========================================================================
-function createTaskRow(task) {
-  const row = document.createElement("div");
-  row.className = `task-row ${task.done ? "completed" : ""}`;
-  row.dataset.taskId = task.id;
+function createTaskCard(task) {
+  const card = document.createElement("div");
+  card.className = `task-item-card ${task.done ? "is-done" : ""}`;
+  card.dataset.taskId = task.id;
 
-  // Spring Circular Checkbox
-  const checkbox = document.createElement("div");
-  checkbox.className = `checkbox-box ${task.done ? "checked" : ""}`;
-  checkbox.setAttribute("role", "checkbox");
-  checkbox.setAttribute("aria-checked", task.done ? "true" : "false");
-  checkbox.title = task.done ? "Mark as pending" : "Mark as complete";
+  // Hollow Spring Checkbox
+  const check = document.createElement("div");
+  check.className = `check-circle ${task.done ? "checked" : ""}`;
+  check.title = task.done ? "Mark as pending" : "Mark as completed";
 
   const tickSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  tickSvg.setAttribute("class", "checkbox-tick");
+  tickSvg.setAttribute("class", "check-svg");
   tickSvg.setAttribute("viewBox", "0 0 24 24");
   tickSvg.setAttribute("width", "11");
   tickSvg.setAttribute("height", "11");
   tickSvg.setAttribute("fill", "none");
   const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
   polyline.setAttribute("points", "20 6 9 17 4 12");
+  polyline.setAttribute("stroke-width", "3");
+  polyline.setAttribute("stroke", "currentColor");
   tickSvg.appendChild(polyline);
-  checkbox.appendChild(tickSvg);
+  check.appendChild(tickSvg);
 
-  checkbox.addEventListener("click", async (e) => {
+  check.addEventListener("click", async (e) => {
     e.stopPropagation();
-    checkbox.classList.toggle("checked");
+    check.classList.toggle("checked");
     playPopSound();
     await tauri.invoke("toggle_task", { id: task.id });
     await loadTasks();
   });
 
-  // Task Info
+  // Task Text & Priority Dot
   const info = document.createElement("div");
-  info.className = "task-info";
+  info.className = "task-main-info";
 
-  const title = document.createElement("span");
-  title.className = "task-title";
-  title.textContent = task.title; // Strict textContent
+  const text = document.createElement("span");
+  text.className = "task-text";
+  text.textContent = task.title; // Safe textContent
 
   // Double click inline edit
-  title.addEventListener("dblclick", (e) => {
+  text.addEventListener("dblclick", (e) => {
     e.stopPropagation();
-    startInlineEditing(title, task);
+    startInlineEditing(text, task);
   });
 
-  const meta = document.createElement("div");
-  meta.className = "task-sub-meta";
+  info.appendChild(text);
 
-  // Priority Chip
   if (task.priority > 0) {
-    const prioChip = document.createElement("span");
-    if (task.priority === 2) {
-      prioChip.className = "priority-chip priority-high";
-      prioChip.textContent = "HIGH";
-    } else if (task.priority === 1) {
-      prioChip.className = "priority-chip priority-med";
-      prioChip.textContent = "MED";
-    }
-    meta.appendChild(prioChip);
+    const dot = document.createElement("span");
+    dot.className = `prio-dot-tag ${task.priority === 2 ? "prio-dot-high" : "prio-dot-med"}`;
+    dot.title = task.priority === 2 ? "High Priority" : "Medium Priority";
+    info.appendChild(dot);
   }
 
-  // Subtask progress
-  if (task.subtask_count && task.subtask_count > 0) {
-    const subBadge = document.createElement("span");
-    subBadge.className = "subtask-badge";
-    subBadge.textContent = `📋 ${task.subtasks_done || 0}/${task.subtask_count}`;
-    meta.appendChild(subBadge);
-  }
-
-  info.appendChild(title);
-  if (meta.children.length > 0) info.appendChild(meta);
-
-  // Micro Actions Cluster (Pin + Instant Delete)
+  // Hover Actions (Pin & Instant Delete)
   const actions = document.createElement("div");
-  actions.className = "row-actions";
+  actions.className = "item-actions";
 
-  // Pin Button
+  // Pin button
   const pinBtn = document.createElement("button");
-  pinBtn.className = `action-mini-btn pin-btn ${task.pinned ? "pinned" : ""}`;
-  pinBtn.title = task.pinned ? "Unpin task" : "Pin to top";
-  pinBtn.setAttribute("aria-label", "Pin task");
-  pinBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="${task.pinned ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M5 17h14v-2l-2-3V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v6l-2 3v2z"/></svg>`;
+  pinBtn.className = `row-mini-btn btn-pin ${task.pinned ? "pinned" : ""}`;
+  pinBtn.title = task.pinned ? "Unpin reminder" : "Pin to top";
+  pinBtn.setAttribute("aria-label", "Pin");
+  pinBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="${task.pinned ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2.5"><path d="M5 17h14v-2l-2-3V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v6l-2 3v2z"/></svg>`;
   pinBtn.addEventListener("click", async (e) => {
     e.stopPropagation();
     await tauri.invoke("update_task", { id: task.id, pinned: !task.pinned });
@@ -490,45 +297,40 @@ function createTaskRow(task) {
   });
 
   // Direct Delete Button (Instant Remove!)
-  const deleteBtn = document.createElement("button");
-  deleteBtn.className = "action-mini-btn delete-btn";
-  deleteBtn.title = "Delete task";
-  deleteBtn.setAttribute("aria-label", "Delete task");
-  deleteBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-  deleteBtn.addEventListener("click", async (e) => {
+  const delBtn = document.createElement("button");
+  delBtn.className = "row-mini-btn btn-trash";
+  delBtn.title = "Delete reminder";
+  delBtn.setAttribute("aria-label", "Delete");
+  delBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  delBtn.addEventListener("click", async (e) => {
     e.stopPropagation();
     state.lastDeletedTask = task;
     await tauri.invoke("delete_task", { id: task.id });
-    showToast("Task removed", undoDelete);
+    showToast("Reminder deleted", undoDelete);
     await loadTasks();
   });
 
   actions.appendChild(pinBtn);
-  actions.appendChild(deleteBtn);
+  actions.appendChild(delBtn);
 
-  row.appendChild(checkbox);
-  row.appendChild(info);
-  row.appendChild(actions);
+  card.appendChild(check);
+  card.appendChild(info);
+  card.appendChild(actions);
 
-  // Open Details Drawer on Row Click (outside of buttons)
-  row.addEventListener("click", () => {
-    openDrawer(task);
-  });
-
-  return row;
+  return card;
 }
 
-function startInlineEditing(titleEl, task) {
+function startInlineEditing(textEl, task) {
   const input = document.createElement("input");
   input.type = "text";
   input.value = task.title;
-  input.className = "capsule-input";
-  input.style.border = "1px solid var(--accent-indigo)";
+  input.className = "inline-add-input";
+  input.style.border = "1px solid var(--accent)";
   input.style.borderRadius = "6px";
   input.style.padding = "2px 8px";
-  input.style.background = "rgba(0, 0, 0, 0.4)";
+  input.style.background = "rgba(0, 0, 0, 0.5)";
 
-  titleEl.replaceWith(input);
+  textEl.replaceWith(input);
   input.focus();
 
   const save = async () => {
@@ -537,95 +339,19 @@ function startInlineEditing(titleEl, task) {
       await tauri.invoke("update_task", { id: task.id, title: newTitle });
       await loadTasks();
     } else {
-      input.replaceWith(titleEl);
+      input.replaceWith(textEl);
     }
   };
 
   input.addEventListener("blur", save);
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") save();
-    if (e.key === "Escape") input.replaceWith(titleEl);
+    if (e.key === "Escape") input.replaceWith(textEl);
   });
 }
 
 // ==========================================================================
-// Details Drawer
-// ==========================================================================
-async function openDrawer(task) {
-  state.activeTaskId = task.id;
-  const drawer = document.getElementById("details-drawer");
-  const titleInput = document.getElementById("drawer-task-title");
-  const notesArea = document.getElementById("drawer-task-notes");
-
-  titleInput.value = task.title;
-  notesArea.value = task.notes || "";
-
-  document.querySelectorAll("#drawer-priority-picker .segment-btn").forEach((btn) => {
-    if (parseInt(btn.dataset.priority, 10) === task.priority) {
-      btn.classList.add("active");
-    } else {
-      btn.classList.remove("active");
-    }
-  });
-
-  await refreshSubtasks(task.id);
-  drawer.classList.add("open");
-}
-
-function closeDrawer() {
-  document.getElementById("details-drawer").classList.remove("open");
-  state.activeTaskId = null;
-}
-
-async function refreshSubtasks(taskId) {
-  try {
-    const subtasks = await tauri.invoke("get_subtasks", { taskId });
-    const list = document.getElementById("drawer-subtasks-list");
-    const progressText = document.getElementById("drawer-subtask-progress");
-    list.replaceChildren();
-
-    const total = subtasks.length;
-    const done = subtasks.filter((s) => s.done).length;
-    progressText.textContent = `${done}/${total}`;
-
-    subtasks.forEach((s) => {
-      const item = document.createElement("div");
-      item.className = `subtask-item ${s.done ? "done" : ""}`;
-
-      const check = document.createElement("input");
-      check.type = "checkbox";
-      check.checked = s.done;
-      check.addEventListener("change", async () => {
-        await tauri.invoke("toggle_subtask", { id: s.id });
-        await refreshSubtasks(taskId);
-        await loadTasks();
-      });
-
-      const span = document.createElement("span");
-      span.textContent = s.title;
-      span.style.flex = "1";
-
-      const del = document.createElement("button");
-      del.className = "action-mini-btn delete-btn";
-      del.innerHTML = "✕";
-      del.addEventListener("click", async () => {
-        await tauri.invoke("delete_subtask", { id: s.id });
-        await refreshSubtasks(taskId);
-        await loadTasks();
-      });
-
-      item.appendChild(check);
-      item.appendChild(span);
-      item.appendChild(del);
-      list.appendChild(item);
-    });
-  } catch (err) {
-    console.error("Failed to refresh subtasks:", err);
-  }
-}
-
-// ==========================================================================
-// Glance Pill HUD (Dynamic Island)
+// Dynamic Island HUD (Glance Mode)
 // ==========================================================================
 function toggleGlanceMode() {
   state.isGlanceMode = !state.isGlanceMode;
@@ -641,7 +367,7 @@ function toggleGlanceMode() {
       pill.style.display = "flex";
       pill.classList.add("rubber-morph-expand");
       if (win?.setSize && window.__TAURI__?.dpi?.LogicalSize) {
-        await win.setSize(new window.__TAURI__.dpi.LogicalSize(360, 48));
+        await win.setSize(new window.__TAURI__.dpi.LogicalSize(350, 48));
       }
     }, 180);
   } else {
@@ -652,7 +378,7 @@ function toggleGlanceMode() {
       canvas.style.display = "flex";
       canvas.classList.add("rubber-morph-expand");
       if (win?.setSize && window.__TAURI__?.dpi?.LogicalSize) {
-        await win.setSize(new window.__TAURI__.dpi.LogicalSize(360, 580));
+        await win.setSize(new window.__TAURI__.dpi.LogicalSize(350, 460));
       }
     }, 180);
   }
@@ -684,94 +410,18 @@ function updateGlancePill() {
 }
 
 // ==========================================================================
-// Window Mode & Position
+// Pin Always on Top Toggle
 // ==========================================================================
-async function applyWindowMode(mode) {
-  state.windowMode = mode;
-  state.isPinnedAlwaysOnTop = (mode === "top");
-
+async function toggleAlwaysOnTop() {
+  state.isPinnedAlwaysOnTop = !state.isPinnedAlwaysOnTop;
   const pinBtn = document.getElementById("btn-toggle-pin");
-  if (pinBtn) {
-    pinBtn.classList.toggle("pinned", state.isPinnedAlwaysOnTop);
-    pinBtn.title = state.isPinnedAlwaysOnTop
-      ? "Hovering on Top (Click for Wallpaper Widget)"
-      : "Desktop Wallpaper Widget (Click to Hover on Top)";
-  }
-
-  document.querySelectorAll("#window-mode-control .segment-btn").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.mode === mode);
-  });
+  pinBtn.classList.toggle("pinned", state.isPinnedAlwaysOnTop);
 
   try {
+    const mode = state.isPinnedAlwaysOnTop ? "top" : "normal";
     await tauri.invoke("set_window_mode", { mode });
   } catch (err) {
-    console.warn("set_window_mode invoke error:", err);
-  }
-
-  try {
-    await tauri.invoke("save_setting", { key: "window_mode", value: mode });
-  } catch (err) {
-    console.warn("save_setting window_mode error:", err);
-  }
-}
-
-async function toggleAlwaysOnTop() {
-  const nextMode = state.windowMode === "top" ? "normal" : "top";
-  await applyWindowMode(nextMode);
-}
-
-async function loadSavedSettings() {
-  try {
-    const settings = await tauri.invoke("get_settings");
-    if (settings) {
-      if (settings.opacity) {
-        const val = parseInt(settings.opacity, 10);
-        const slider = document.getElementById("opacity-slider");
-        const label = document.getElementById("opacity-val-label");
-        if (slider) slider.value = val;
-        if (label) label.textContent = `${val}%`;
-        document.documentElement.style.setProperty("--bg-deep", `rgba(14, 17, 26, ${val / 100})`);
-      }
-      if (settings.accent_color) {
-        const color = settings.accent_color;
-        document.documentElement.style.setProperty("--accent-indigo", color);
-        document.documentElement.style.setProperty("--accent-glow", `${color}40`);
-        document.querySelectorAll(".color-swatch").forEach((s) => {
-          s.classList.toggle("active", s.dataset.color === color);
-        });
-      }
-      const mode = settings.window_mode || "normal";
-      await applyWindowMode(mode);
-
-      // Restore position
-      const win = tauri.getCurrentWindow();
-      if (win && settings.window_pos_x && settings.window_pos_y && win.setPosition) {
-        const x = parseInt(settings.window_pos_x, 10);
-        const y = parseInt(settings.window_pos_y, 10);
-        if (!isNaN(x) && !isNaN(y) && window.__TAURI__?.dpi?.PhysicalPosition) {
-          try {
-            await win.setPosition(new window.__TAURI__.dpi.PhysicalPosition(x, y));
-          } catch (e) {
-            console.warn("Could not restore window position:", e);
-          }
-        }
-      }
-
-      if (win?.onMoved) {
-        try {
-          win.onMoved(({ payload }) => {
-            if (payload && typeof payload.x === "number" && typeof payload.y === "number") {
-              tauri.invoke("save_setting", { key: "window_pos_x", value: String(payload.x) });
-              tauri.invoke("save_setting", { key: "window_pos_y", value: String(payload.y) });
-            }
-          });
-        } catch (e) {
-          console.warn("onMoved error:", e);
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("loadSavedSettings error:", err);
+    console.warn("set_window_mode error:", err);
   }
 }
 
@@ -813,7 +463,7 @@ async function undoDelete() {
 }
 
 // ==========================================================================
-// Sound Effects
+// Micro-Sound Synthesis (Audio Pop)
 // ==========================================================================
 function playPopSound() {
   try {
@@ -827,7 +477,7 @@ function playPopSound() {
     const gain = ctx.createGain();
 
     osc.type = "sine";
-    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    osc.frequency.setValueAtTime(480, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.05);
 
     gain.gain.setValueAtTime(0.12, ctx.currentTime);
@@ -839,24 +489,4 @@ function playPopSound() {
     osc.start();
     osc.stop(ctx.currentTime + 0.05);
   } catch (e) {}
-}
-
-// ==========================================================================
-// Fallback Mock (Only if running in plain browser)
-// ==========================================================================
-function mockInvoke(cmd, args) {
-  if (cmd === "get_tasks") {
-    return [
-      { id: "1", title: "Review product design with team", done: false, pinned: true, priority: 2, subtask_count: 3, subtasks_done: 1 },
-      { id: "2", title: "Complete Tododo wallpaper widget", done: false, pinned: false, priority: 1 },
-      { id: "3", title: "Workout 45 mins", done: true, pinned: false, priority: 0 },
-    ];
-  }
-  if (cmd === "get_subtasks") {
-    return [
-      { id: "s1", title: "Verify glass transparency", done: true },
-      { id: "s2", title: "Test direct task delete button", done: false },
-    ];
-  }
-  return [];
 }
