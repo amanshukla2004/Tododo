@@ -27,8 +27,25 @@ pub fn run() {
             tray::setup_tray(&app.handle())
                 .expect("Failed to setup system tray");
 
-            // Intercept window close to hide to tray instead of quitting
+            // Configure desktop wallpaper widget placement & behavior
             if let Some(main_window) = app.get_webview_window("main") {
+                // Ensure the window resides on the desktop background layer (behind active apps)
+                let _ = main_window.set_always_on_bottom(true);
+
+                // Place widget naturally in the top-right desktop workspace
+                if let Ok(Some(monitor)) = app.handle().primary_monitor() {
+                    let m_pos = monitor.position();
+                    let m_size = monitor.size();
+                    let scale = monitor.scale_factor();
+                    let widget_width_px = (350.0 * scale) as i32;
+                    let margin_x = (48.0 * scale) as i32;
+                    let margin_y = (64.0 * scale) as i32;
+                    let x = m_pos.x + (m_size.width as i32) - widget_width_px - margin_x;
+                    let y = m_pos.y + margin_y;
+                    let _ = main_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
+                }
+
+                // Intercept window close to hide to tray instead of quitting
                 let win_clone = main_window.clone();
                 main_window.on_window_event(move |event| {
                     if let tauri::WindowEvent::CloseRequested { api, .. } = event {

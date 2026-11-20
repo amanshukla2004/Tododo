@@ -416,9 +416,12 @@ async function toggleAlwaysOnTop() {
   state.isPinnedAlwaysOnTop = !state.isPinnedAlwaysOnTop;
   const pinBtn = document.getElementById("btn-toggle-pin");
   pinBtn.classList.toggle("pinned", state.isPinnedAlwaysOnTop);
+  pinBtn.title = state.isPinnedAlwaysOnTop
+    ? "Pinned on Top (Click for Desktop Wallpaper Mode)"
+    : "Desktop Wallpaper Mode (Click to Pin on Top)";
 
   try {
-    const mode = state.isPinnedAlwaysOnTop ? "top" : "normal";
+    const mode = state.isPinnedAlwaysOnTop ? "top" : "desktop";
     await tauri.invoke("set_window_mode", { mode });
   } catch (err) {
     console.warn("set_window_mode error:", err);
