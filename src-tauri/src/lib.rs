@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod db;
 pub mod models;
+pub mod tray;
 
 use std::sync::Mutex;
 use tauri::Manager;
@@ -15,6 +16,21 @@ pub fn run() {
 
             // Register shared Mutex<Connection> in Tauri managed state
             app.manage(Mutex::new(conn));
+
+            // Setup Windows System Tray
+            tray::setup_tray(&app.handle())
+                .expect("Failed to setup system tray");
+
+            // Intercept window close to hide to tray instead of quitting
+            if let Some(main_window) = app.get_webview_window("main") {
+                let win_clone = main_window.clone();
+                main_window.on_window_event(move |event| {
+                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        api.prevent_close();
+                        let _ = win_clone.hide();
+                    }
+                });
+            }
 
             if cfg!(debug_assertions) {
                 app.handle().plugin(
