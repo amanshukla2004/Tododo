@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tododo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="widget-container" id="app">
+    <!-- Header / Drag region for moving the widget -->
+    <header class="widget-header" data-tauri-drag-region>
+      <div class="brand" data-tauri-drag-region>
+        <span class="status-dot"></span>
+        <h1 class="brand-title">Tododo</h1>
+      </div>
+      <div class="window-controls">
+        <span class="version-badge">v0.1.0</span>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="widget-main">
+      <div class="hero-card">
+        <div class="hero-icon">✨</div>
+        <h2 class="hero-title">Ambient To-Do Companion</h2>
+        <p class="hero-desc">Phase 1 Vanilla Shell is live! Running native Tauri v2 with zero bundlers and minimal memory footprint.</p>
+        
+        <div class="connection-status" id="tauri-status">
+          <span class="pulse-indicator"></span>
+          <span id="status-text">Checking Tauri connection...</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="widget-footer">
+      <span class="footer-hint">Next: Obsidian Glass & Transparency (Phase 2)</span>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
