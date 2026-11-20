@@ -23,7 +23,7 @@
         "decorations": false,
         "alwaysOnTop": false,
         "alwaysOnBottom": true,
-        "skipTaskbar": true,
+        "skipTaskbar": false,
         "shadow": false,
         "windowEffects": {
           "effects": ["acrylic"]
