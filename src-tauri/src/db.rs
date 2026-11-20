@@ -7,19 +7,29 @@ use tauri::{AppHandle, Manager};
 pub struct Database;
 
 impl Database {
-    /// Resolves the SQLite file path inside OS AppData folder (%APPDATA%/com.tododo.app/tododo.db)
+    /// Resolves the SQLite file path inside OS AppData folder (%APPDATA%/com.tododo.desktop/tododo.db) with safe fallback
     pub fn get_db_path(app: &AppHandle) -> Result<PathBuf, String> {
-        let app_dir = app
-            .path()
-            .app_data_dir()
-            .map_err(|e| format!("Failed to get app data dir: {}", e))?;
-
-        if !app_dir.exists() {
-            fs::create_dir_all(&app_dir)
-                .map_err(|e| format!("Failed to create app data directory: {}", e))?;
+        if let Ok(app_dir) = app.path().app_data_dir() {
+            if fs::create_dir_all(&app_dir).is_ok() {
+                let db_path = app_dir.join("tododo.db");
+                if Connection::open(&db_path).is_ok() {
+                    return Ok(db_path);
+                }
+            }
         }
 
-        Ok(app_dir.join("tododo.db"))
+        if let Ok(local_dir) = app.path().app_local_data_dir() {
+            if fs::create_dir_all(&local_dir).is_ok() {
+                let db_path = local_dir.join("tododo.db");
+                if Connection::open(&db_path).is_ok() {
+                    return Ok(db_path);
+                }
+            }
+        }
+
+        // Fallback to current working directory
+        let fallback_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        Ok(fallback_dir.join("tododo.db"))
     }
 
     /// Initializes SQLite connection and applies migrations up to current version
